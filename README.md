@@ -1,133 +1,333 @@
 
-# Higi Hen House Controller V1.1
+Chicken Coop Automation Controller
 
-WiFi-enabled automatic chicken coop door and lighting controller for ESP32-S3.
+An advanced automated chicken coop controller built around the ESP32-S3 platform.
+This project automates a vertical drop-door chicken coop using sunrise/sunset calculations, WiFi time sync, RTC backup, safety monitoring, fault logging, OLED display menus, and full manual override controls.
 
-Designed for reliable poultry coop automation using sunrise/sunset calculations, RTC backup timing, OLED status display, and safety fault protection.
+Designed to be reliable, inexpensive, and easy to build using commonly available parts from AliExpress.
 
----
+Features
+Automatic Door Control
+Opens the coop door automatically after sunrise
+Closes automatically after sunset
+Adjustable sunrise/sunset offsets
+Uses calculated sunrise/sunset times with DST support
+Automatic daily reset at midnight
+Safety Features
+Door close-open-close safety cycle to release trapped chickens
+Motor timeout protection to prevent burnout
+Full safety timeout system
+Fault detection and lockout mode
+Reed switch conflict detection
+Manual fault reset system
+Fault buzzer and flashing warning LED
+Lighting Automation
+Coop light turns on before sunset
+Light turns off automatically after door close
+Manual light override
+Manual light auto-timeout
+OLED Interface
+1.3" OLED I2C display
+Multiple display pages:
+Main status page
+Manual control page
+Event history page
+WiFi diagnostics page
+System time page
+Event Logging
+Stores timestamped system events
+Fault diagnostics history
+Scrollable event viewer
+Manual Controls
+Rotary encoder navigation
+Manual door open/close
+Manual light control
+Wake/sleep display
+Fault reset controls
+Connectivity
+WiFi NTP time synchronization
+Automatic WiFi reconnect
+RTC backup using DS3231
+WiFi signal quality display
+Hardware Used
+Main Controller
+ESP32-S3 N16R8 (external antenna recommended)
+Display
+1.3" SH1106 OLED I2C display
+RTC
+DS3231 RTC module
+Input
+KY-040 rotary encoder
+Door Motor
+JGB37-520 geared DC motor
+22RPM gearbox
+Vertical drop-door mechanism
+Pulley and cord/string system
+Motor Driver
+L298N motor controller
+(TB6612FNG also works)
+Sensors
+2x Normally Open reed limit switches
+Magnet-actuated
+Lighting
+3.3V relay module
+Alerts
+Active buzzer
+Green status LED
+Red fault LED
+Power
+12V 100W / 8A PSU
+DC-DC buck converter (12V → 5V)
+GPIO Pin Mapping
+Function	GPIO
+Motor Open	41
+Motor Close	42
+Open Limit Switch	15
+Close Limit Switch	16
+Coop Light Relay	17
+Buzzer	3
+Green Status LED	6
+Red Fault LED	7
+Encoder CLK	4
+Encoder DT	5
+Encoder SW	18
+I2C SDA	8
+I2C SCL	9
+Required Arduino Libraries
 
-## Features
+Install the following libraries through the Arduino IDE Library Manager:
 
-- Automatic coop door control
-- Sunrise / sunset calculations
-- WiFi + NTP time synchronization
-- DS3231 RTC backup clock
-- OLED live status display
-- Manual override controls
-- Coop lighting automation
-- Motor timeout protection
-- Fault detection and lockout protection
-- Event history logging
-- Automatic startup homing
-- ESP32-S3 compatible
-
----
-
-## Hardware Required
-
-- ESP32-S3 development board
-- DS3231 RTC module
-- 1.3" SH1106 OLED display
-- L298N motor driver
-- 12V door motor
-- Relay module for coop lighting
-- Limit switches
-- Push buttons
-
----
-
-## Pin Assignments
-
-| Function | GPIO |
-|---|---|
-| Motor Open | 41 |
-| Motor Close | 42 |
-| Open Limit Switch | 15 |
-| Close Limit Switch | 16 |
-| Coop Light Relay | 17 |
-| Manual Light Switch | 13 |
-| Manual Open Switch | 4 |
-| Manual Close Switch | 5 |
-| Event Scroll Button | 18 |
-
-I2C:
-- SDA = GPIO 8
-- SCL = GPIO 9
-
----
-
-## Setup
-
-### 1. Install Arduino IDE
-
-Install:
-- ESP32 board support
-- Required libraries
-
-### 2. Required Libraries
-
-Install using Arduino Library Manager:
-
-- RTClib
-- U8g2
-- WiFi (ESP32 core)
-
----
-
-## Configure Secrets
+Library	Author
+WiFi	ESP32 Core
+RTClib	Adafruit
+U8g2	oliver
+AiEsp32RotaryEncoder	igorantolic
+Wire	Arduino
+time	ESP32 Core
+secrets.h File
 
 Create a file named:
 
-```cpp
-Secrets.h
-```
+secrets.h
 
-Add:
+Add the following:
 
-```cpp
 #pragma once
 
-#define WIFI_SSID "yourWiFi"
-#define WIFI_PASSWORD "yourPassword"
+const char* WIFI_SSID = "YOUR_WIFI_NAME";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
-double latitude = 50.0000;
-double longitude = -3.0000;
-```
+// Your location coordinates
+double latitude = 51.5074;
+double longitude = -0.1278;
 
----
+Replace the coordinates with your own location.
 
-## Uploading
+You can get your latitude and longitude from Google Maps.
 
-1. Select:
-   - Board: ESP32S3 Dev Module
-2. Open:
-   - `HigiHenHouse.ino`
-3. Upload firmware
+How It Works
+Sunrise/Sunset Automation
 
----
+The system calculates sunrise and sunset times daily using:
 
-## Safety Features
+Latitude
+Longitude
+Daylight Saving Time
 
-- Motor runtime timeout
-- Safety reopen cycle
-- Fault detection
-- Automatic lockout after repeated failures
-- Manual override timeout
-- Startup homing recovery
+WiFi is required for accurate NTP synchronization.
 
----
+The DS3231 RTC keeps time during WiFi outages.
 
-## Recommended Final Build Additions
+User Adjustable Settings
 
-- Physical reset button
-- Fuse protection
-- Waterproof enclosure
-- Emergency manual door release
-- Battery backup
+Near the top of the sketch:
 
----
+// Door opens AFTER sunrise
+int sunriseOpenOffset = 10;
 
+// Door closes AFTER sunset
+int sunsetCloseOffset = 30;
 
+// Coop light comes ON before sunset.
+int lightOnOffset = 1;
 
-Higi Hen House Project
+// Coop light goes OFF after sunset.
+int lightOffMinutes = 35;
+
+You can easily adjust:
+
+Door open timing
+Door close timing
+Light timing
+OLED sleep timing
+Buzzer timing
+Motor timeout values
+Fault System
+
+The controller includes several safety checks:
+
+Fault	Description
+OPEN timeout	Door failed to open
+CLOSE timeout	Door failed to close
+LIMIT CONFLICT	Both switches active
+HOME FAIL	Startup homing failed
+Safety timeout	Safety cycle exceeded limit
+
+After repeated failures:
+
+System enters LOCKOUT mode
+Buzzer sounds
+Red LED flashes rapidly
+
+Manual reset:
+
+Hold encoder button for 5 seconds
+Rotary Encoder Controls
+Short Press
+Wake display
+Change pages
+Hold ~3 Seconds
+Manual light ON/OFF
+Hold 5 Seconds
+Reset faults and lockouts
+Rotate Encoder
+Manual Page Only
+Counter-clockwise → Open door
+Clockwise → Close door
+Startup Recovery
+
+On boot:
+
+System checks door position
+If unknown, it attempts homing
+Door closes until close limit is reached
+Prevents accidental position errors after power loss
+Wiring Notes
+Reed Switches
+
+Use:
+
+Normally Open switches
+Connected to GND
+Internal pullups enabled in software
+Motor Driver
+
+Ensure:
+
+Proper flyback protection
+Shared common ground
+Adequate PSU current capacity
+Relay Board
+
+Use:
+
+Logic-level 3.3V compatible relay module
+Recommended Improvements
+
+Possible future upgrades:
+
+Battery backup
+Solar charging
+Web dashboard
+OTA firmware updates
+Temperature monitoring
+Egg counter
+Predator sensors
+Telegram or MQTT notifications
+Installation
+1. Install Arduino IDE
+
+Download:
+
+Arduino IDE 2.x
+2. Install ESP32 Board Package
+
+Add ESP32 board support:
+
+ESP32 by Espressif Systems
+3. Install Libraries
+
+Install all required libraries.
+
+4. Create secrets.h
+
+Add WiFi credentials and coordinates.
+
+5. Select Board
+
+Choose:
+
+ESP32S3 Dev Module
+6. Upload Firmware
+
+Compile and upload the sketch.
+
+OLED Pages
+Main Page
+Door status
+Light status
+WiFi signal indicator
+Manual Control
+Manual open/close
+Manual light control
+Events
+Scrollable event history
+System WiFi
+IP address
+Signal quality
+System Time
+Current time
+Sunrise/sunset times
+Power Consumption
+
+Typical system:
+
+ESP32-S3
+OLED display
+RTC
+Relay
+Motor controller idle
+
+Runs comfortably from:
+
+12V 8A supply
+
+Motor startup current depends on:
+
+Door weight
+Pulley friction
+Motor gearing
+Notes
+Slower door motors generally work better
+Ensure the door slides freely
+Avoid excessive motor load
+Test timeout values carefully
+Magnets must align properly with reed switches
+Use shielded wiring for long switch runs if needed
+Example Use Case
+
+Typical evening sequence:
+
+Coop light turns on before sunset
+Door closes after sunset
+Safety reopen cycle runs briefly
+Door recloses securely
+Light turns off later
+System resets overnight
+
+Morning:
+
+Door opens after sunrise
+Chickens released automatically
+Repository Structure
+/ChickenCoopController
+│
+├── ChickenCoopController.ino
+├── secrets.h
+├── README.md
+└── images/
+License
+
+MIT License
+
+Feel free to modify, improve, and share.
