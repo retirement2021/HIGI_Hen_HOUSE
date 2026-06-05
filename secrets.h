@@ -1,8 +1,8 @@
 #pragma once
 
 // WiFi Credentials
-#define WIFI_SSID "your internet"
-#define WIFI_PASSWORD "Your password"
+#define WIFI_SSID "Your-WiFi"
+#define WIFI_PASSWORD "Your-Password"
 
 // Location of Hen House
 double latitude = 50.0000;
