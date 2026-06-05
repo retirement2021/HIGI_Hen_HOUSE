@@ -1,5 +1,6 @@
 // Very capable sketch for automation of a chicken coop.
 // This system uses a ESP32 S3 N16R8 with external antenner socket, a 1.3" OLED I2C display, DS3231 RTC, KY-040 rotary controller and a modular relay board for the light.
+// WatchDog to maintain system automatically.
 // The door is a vertical drop door using a motor and pulley and a cord.
 // Door motor is a 12 volt JGB37-520 geared to 22RPM and a small 31mm pulley, L298N motor controller and two"NO"reed limit switches that oporate with magnets, these tell the system if the door is open of closed.
 // The whole System is powered by a 12v 100w / 8.5 amp power supply and a LM2596S DC to DC buck to reduce the voltage down to 5v for the ESP32 board.
@@ -97,7 +98,7 @@ unsigned long buzzerRepeatInterval = 15 * SECOND;
 // =====================================================
 
 #define MOTOR_TIMEOUT (15 * SECOND)  // adjust for how long the door motor runs between limit switches. Plus 2-3 seconds.
-
+                                     // look at the events list,example door open 12.6 Seconds
 #define SAFETY_TIMEOUT (2 * MINUTE)  // adjust for overall fail safe
 
 #define WIFI_RETRY_INTERVAL (45 * SECOND)  // if WiFi fails retry every __ until connected
