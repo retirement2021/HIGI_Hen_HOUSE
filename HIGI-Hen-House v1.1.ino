@@ -467,7 +467,7 @@ AutoState computeAutoState(int nowMinutes) {
   }
 
   // Daytime operating window
-  if (nowMinutes >= openTime && nowMinutes < closeTime) {
+  if (nowMinutes >= openTime && nowMinutes <= closeTime) {
     return AUTO_ALLOWED;
   }
 
