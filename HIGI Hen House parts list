@@ -43,7 +43,7 @@
 
  ====POWER SUPPLY====
 
- DC to DC step down buck converter;
+ DC to DC step down buck converter; (set to 5v for ESP32 power)
  https://www.aliexpress.com/item/1005009050262370.html?spm=a2g0o.order_list.order_list_main.101.7b3118025voFBR
 
  12V power supply;
