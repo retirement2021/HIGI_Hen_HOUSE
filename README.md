@@ -1,6 +1,9 @@
 
 Chicken Coop Automation Controller
 
+V1.1 fully functional 
+V1.2 Fully functional with additional LED's X2 above the Coop door. Two differant flashing patterns 1st at sunset followed by 2nd pattern when the door is fully closed. 
+
 An advanced automated chicken coop controller built around the ESP32-S3 platform.
 This project automates a vertical drop-door chicken coop using sunrise/sunset calculations, WiFi time sync, RTC backup, safety monitoring, fault logging, OLED display menus, and full manual override controls.
 
@@ -13,14 +16,16 @@ Closes automatically after sunset.
 Adjustable sunrise/sunset offsets.
 Uses calculated sunrise/sunset times with DST support.
 Automatic daily reset at midnight.
+
 Safety Features...
-Door close-open-close safety cycle to release trapped chickens.
+Door close-open-close safety cycle if a obstuction is encountered to release trapped chickens.
 Motor timeout protection to prevent burnout.
 Full safety timeout system.
 Fault detection and lockout mode.
 Reed switch conflict detection.
 Manual fault reset system.
 Fault buzzer and flashing warning LED.
+
 Lighting Automation...
 Coop light turns on before sunset.
 Light turns off automatically after door close.
@@ -38,47 +43,62 @@ Event Logging.
 Stores timestamped system events.
 Fault diagnostics history.
 Scrollable event viewer.
+
 Manual Controls...
 Rotary encoder navigation.
 Manual door open/close.
 Manual light control.
 Wake/sleep display.
 Fault reset controls.
+
 Connectivity...
 WiFi NTP time synchronization.
 Automatic WiFi reconnect.
 RTC backup using DS3231.
 WiFi signal quality display.
+
 Hardware Used...
 Main Controller.
 ESP32-S3 N16R8 (external antenna recommended).
+
 Display...
 1.3" SH1106 OLED I2C display.
+
 RTC...
 DS3231 RTC module.
+
 Input..
 KY-040 rotary encoder.
 Door Motor..
+
 JGB37-520 geared DC motor.
 22RPM gearbox.
+
 Vertical drop-door mechanism.
-Pulley and cord/string system.
+Pulley and cord system.
+
 Motor Driver.
 L298N motor controller.
 (TB6612FNG also works).
+
 Sensors...
 2x Normally Open reed limit switches.
 Magnet-actuated.
+
 Lighting...
 3.3V relay module.
+
 Alerts...
 Active buzzer.
 Green status LED.
 Red fault LED.
+
 Power...
 12V 100W / 8A PSU.
 DC-DC buck converter (12V → 5V).
+
 GPIO Pin Mapping....
+
 Function	GPIO.
 Motor Open	41.
 Motor Close	42.
@@ -88,23 +108,13 @@ Coop Light Relay	17.
 Buzzer	3.
 Green Status LED	6.
 Red Fault LED	7.
+Red Door indicator LED 13. V1.2
+Red Door indicator LED 14. V1.2
 Encoder CLK	4.
 Encoder DT	5.
 Encoder SW	18.
 I2C SDA	8.
 I2C SCL	9.
-Required Arduino Libraries
-
-Install the following libraries through the Arduino IDE Library Manager:
-
-Library	Author
-WiFi	ESP32 Core
-RTClib	Adafruit
-U8g2	oliver
-AiEsp32RotaryEncoder	igorantolic
-Wire	Arduino
-time	ESP32 Core
-secrets.h File
 
 Create a file named:
 
@@ -118,8 +128,8 @@ const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
 // Your location coordinates
-double latitude = 51.5074;
-double longitude = -0.1278;
+double latitude = 51.0000;
+double longitude = -3.0000;
 
 Replace the coordinates with your own location.
 
@@ -163,6 +173,8 @@ OLED sleep timing
 Buzzer timing
 Motor timeout values
 Fault System
+Version numbers
+Door indicator timing
 
 The controller includes several safety checks:
 
@@ -183,15 +195,19 @@ Manual reset:
 
 Hold encoder button for 5 seconds.
 Rotary Encoder Controls.
+
 Short Press...
 Wake display.
 Change pages.
+
 Hold ~3 Seconds...
 Manual light ON/OFF.
+
 Hold 5 Seconds...
 Reset faults and lockouts.
+
 Rotate Encoder.
-Manual Page Only.
+MANUAL PAGE ONLY.
 Counter-clockwise → Open door.
 Clockwise → Close door.
 Startup Recovery.
@@ -240,9 +256,9 @@ Installation
 Download:
 
 Arduino IDE 2.x
-2. Install ESP32 Board Package
+2. Install ESP32S3 Dev Module Board Package
 
-Add ESP32 board support:
+Add ESP32s3 board support:
 
 ESP32 by Espressif Systems
 3. Install Libraries
@@ -253,7 +269,7 @@ Install all required libraries.
 
 Add WiFi credentials and coordinates.
 
-5. Select Board
+5. Select Board ESP32S3 Dev Module
 
 Choose:
 
@@ -310,7 +326,7 @@ Typical evening sequence:
 
 Coop light turns on before sunset
 Door closes after sunset
-Safety reopen cycle runs briefly
+Safety reopen cycle runs if obstuction is encountered
 Door recloses securely
 Light turns off later
 System resets overnight
