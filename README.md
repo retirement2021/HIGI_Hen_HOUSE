@@ -3,6 +3,7 @@ Chicken Coop Automation Controller
 
 V1.1 fully functional 
 V1.2 Fully functional with additional LED's X2 above the Coop door. Two differant flashing patterns 1st at sunset followed by 2nd pattern when the door is fully closed. 
+V1.4 added DHT22 coop temp and humidity with it's own pages permenant 30day log retained even after power fail
 
 An advanced automated chicken coop controller built around the ESP32-S3 platform.
 This project automates a vertical drop-door chicken coop using sunrise/sunset calculations, WiFi time sync, RTC backup, safety monitoring, fault logging, OLED display menus, and full manual override controls.
