@@ -19,7 +19,7 @@ Uses calculated sunrise/sunset times with DST support.
 Automatic daily reset at midnight.
 
 Safety Features...
-Door close-open-close safety cycle if a obstuction is encountered to release trapped chickens.
+Door close-open-close safety cycle if a obstuction is encountered to release trapped chicken.
 Motor timeout protection to prevent burnout.
 Full safety timeout system.
 Fault detection and lockout mode.
@@ -37,10 +37,12 @@ OLED Interface.
 Multiple display pages:
 Main status page.
 Manual control page.
+Environment page.
 Event history page.
 WiFi diagnostics page.
 System time page.
 Event Logging.
+Environment logging
 Stores timestamped system events.
 Fault diagnostics history.
 Scrollable event viewer.
@@ -85,6 +87,8 @@ L298N motor controller.
 Sensors...
 2x Normally Open reed limit switches.
 Magnet-actuated.
+
+DHT22 temperature/humidity sensor module
 
 Lighting...
 3.3V relay module.
@@ -176,6 +180,7 @@ Motor timeout values
 Fault System
 Version numbers
 Door indicator timing
+Log event count
 
 The controller includes several safety checks:
 
@@ -231,7 +236,7 @@ Motor Driver.
 
 Ensure:
 
-Proper flyback protection.
+Proper flyback protection. 1.5KE18CA TVS diode across the motor terminals
 Shared common ground.
 Adequate PSU current capacity.
 Relay Board.
@@ -247,7 +252,6 @@ Battery backup
 Solar charging
 Web dashboard
 OTA firmware updates
-Temperature monitoring
 Egg counter
 Predator sensors
 Telegram or MQTT notifications
@@ -326,7 +330,9 @@ Example Use Case
 Typical evening sequence:
 
 Coop light turns on before sunset
+Door leds flash together
 Door closes after sunset
+Door LEDs flash in sequence
 Safety reopen cycle runs if obstuction is encountered
 Door recloses securely
 Light turns off later
