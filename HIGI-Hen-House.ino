@@ -1,4 +1,28 @@
-//System uses an ESP32S3 N16R8 board. Arduino IDE: ESP32S3 Dev Module
+//System uses an **ESP32S3 N16R8** board. Arduino IDE: ESP32S3 Dev Module
+
+// Very capable sketch for automation of a chicken coop.
+// This system uses a ESP32 S3 N16R8 with external antenner socket, 
+//1.3" OLED I2C display, 
+//DS3231 RTC, 
+//KY-040 rotary controller 
+//modular relay board for the light.
+// WatchDog to maintain system automatically.
+// The door is a vertical drop door using a motor and pulley and a cord.
+// Door motor is a 12 volt JGB37-520 geared to 22RPM and a small 31mm pulley, L298N motor controller and two"NO"reed limit switches that oporate with magnets, these tell the system if the door is open of closed.
+// The whole System is powered by a 12v 100w / 8.5 amp power supply and a LM2596S DC to DC buck to reduce the voltage down to 5v for the ESP32 board.
+// All connections and a short description in the GPIO block (block 5) close to the top of the sketch
+// It does require a wifi signal for RTC sync and DST.
+// ***USER ADJUSTABLE SETTINGS*** Easily adjust all user settings in one place.
+// It turns the coop light on before sunset and turns off after the door closes.
+// The door opens in the morning after sunrise and closes after sun set with a safety reopen cycle if required to release any chickens that might be in the door way.
+// The code has safety time outs to prevent motor burnout if there is a problem and also door open and close timeouts to keep things sweet.
+// There is simple Fault diagnois in the stored events page with time stamps for each.
+// Everything is controlled by the rotary encoder, in the manual page turn CW or CCW for manual door opening and closing and  3 second press for manual light on/off.
+// The encoder push button has 3 functions, short press wake and change display pages. 3 second press to manually turn the light on/off and long press 5 seconds for resetting faults.
+// The system does a daily automation reset at midnight.
+// There a fault buzzer and LED if attention is needed.
+
+// All of the electronics purchased from AliExpress and a fraction of the cost of Amazon.
 //======================================================
 // LIBRARYS
 //======================================================
