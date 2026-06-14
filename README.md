@@ -6,7 +6,7 @@ This is an advanced Arduino sketch for an **ESP32-S3 based automatic chicken coo
 ## Core Functionality
 - **Automated door control**: Opens at sunrise, closes at sunset with adjustable offsets
 - **Lighting automation**: Turns coop lights on/off based on sunset with separate timing
-- **Temperature/humidity monitoring**: DHT22 sensor with 90-day persistent logging
+- **Temperature/humidity coop monitoring**: DHT22 sensor with 90-day persistent logging
 - **Manual override**: Rotary encoder for complete manual control
 - **Safety features**: Obstruction detection, motor timeouts, limit switch conflict detection
 
