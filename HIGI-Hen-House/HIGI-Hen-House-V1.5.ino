@@ -1223,7 +1223,7 @@ void drawEnvironmentPage() {
     snprintf(
       buf,
       sizeof(buf),
-      "Max T    %.1fC", 
+      "Max T   %.1fC", 
       d.maxTemp);
 
     u8g2.drawStr(0, 42, buf); 
@@ -1234,7 +1234,7 @@ void drawEnvironmentPage() {
       "%s",
       d.maxTempTime);
 
-    u8g2.drawStr(105, 42, buf); //time stamp, 85-110 L/R, 38-42 up/down
+    u8g2.drawStr(95, 42, buf); //time stamp, 85-110 L/R, 38-42 up/down
 
     // ====================================
     // MIN TEMP
@@ -1243,7 +1243,7 @@ void drawEnvironmentPage() {
     snprintf(
       buf,
       sizeof(buf),
-      "Min T    %.1fC",
+      "Min T   %.1fC",
       d.minTemp);
 
     u8g2.drawStr(0, 53, buf);
@@ -1254,7 +1254,7 @@ void drawEnvironmentPage() {
       "%s",
       d.minTempTime);
 
-    u8g2.drawStr(105, 53, buf);
+    u8g2.drawStr(95, 53, buf);
 
     // ====================================
     // MAX HUMIDITY
@@ -1263,7 +1263,7 @@ void drawEnvironmentPage() {
     snprintf(
       buf,
       sizeof(buf),
-      "Max Hum   %.0f%%",
+      "Max H    %.0f%%",
       d.maxHum);
 
     u8g2.drawStr(0, 64, buf);
@@ -1274,7 +1274,7 @@ void drawEnvironmentPage() {
       "%s",
       d.maxHumTime);
 
-    u8g2.drawStr(105, 64, buf);
+    u8g2.drawStr(95, 64, buf);
 
     u8g2.sendBuffer();
   }
