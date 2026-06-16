@@ -30,54 +30,53 @@ const unsigned long HOUR = 3600000UL;
 
 //------------------------------------
 //  DOOR BST TIME (summer)
-//  Positive offset = AFTER sunset / sunrise
-//  Negative offset = BEFORE sunset / sunrise  
 //------------------------------------
 
 //  Door opening offset from sunrise - BST 
+//  Negative offset = BEFORE sunrise 
 int sunriseOpenOffsetBST = -15; 
 
 // Door closing offset from sunset - BST
+// Positive offset = AFTER sunset
 // **
 int sunsetCloseOffsetBST = +50; 
 
 //------------------------------------
 //  LIGHT BST TIME (Summer)
-// Negitive offset = AFTER  sunset
-// Positive offset = BEFORE sunset
 //------------------------------------
 
 // Coop light ON offset from sunset - BST
+// Negitive offset = AFTER  sunset
 int lightOnOffsetBST = -15; 
 
 // Coop light OFF offset from sunset - BST
+// Positive offset = AFTER sunset
 // **  (Example: Door closing offset +50, plus 5 minutes = 55)
 int lightOffMinutesBST = +55;
 
 //-------------------------------------
 //  DOOR GMT TIME. (winter)
-//  Positive offset = AFTER sunset / sunrise
-//  Negative offset = BEFORE sunset / sunrise  
 //-------------------------------------
 
 // Door opening offset from sunrise - GMT
+//  Positive offset = AFTER sunrise 
 int sunriseOpenOffsetGMT = +10; 
 
-
 // Door closing offset from sunset - GMT
+//Positive offset = AFTER sunset
 // **
 int sunsetCloseOffsetGMT = +30; 
 
 //--------------------------------------
 //  LIGHT GMT TIME. (winter)
-// Negitive offset = AFTER  sunset
-// Positive offset = BEFORE sunset
 //--------------------------------------
 
-/// Coop light ON offset from sunset - GMT
+// Coop light ON offset from sunset - GMT
+// Negitive offset = AFTER  sunset
 int lightOnOffsetGMT = +10;  
 
 // Coop light OFF offset from sunset - GMT
+// Positive offset = AFTER sunset
 // **  (Example: Door closing offset +30, plus 5 minutes = 35)
 int lightOffMinutesGMT = +35;
 
