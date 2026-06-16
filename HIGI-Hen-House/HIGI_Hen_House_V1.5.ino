@@ -1524,7 +1524,7 @@ void updateEnvironment() {
   static unsigned long lastRead = 0;
 
 
-  if (millis() - lastRead < 60000) {
+  if (millis() - lastRead < 300000) { // DHT22 reads every 5 minutes, 288 in 24hrs
 
     return;
   }
