@@ -30,8 +30,8 @@ const unsigned long HOUR = 3600000UL;
 
 //------------------------------------
 //  DOOR BST TIME (summer)
-//  Negative offset = Before sunset / sunrise
-//  Positive offset = After sunset / sunrise
+//  Positive offset = AFTER sunset / sunrise
+//  Negative offset = BEFORE sunset / sunrise  
 //------------------------------------
 
 //  Door opening offset from sunrise - BST 
@@ -56,8 +56,8 @@ int lightOffMinutesBST = +55;
 
 //-------------------------------------
 //  DOOR GMT TIME. (winter)
-//  Negative offset = Before sunset / sunrise  
-//  Positive offset = After sunset / sunrise
+//  Positive offset = AFTER sunset / sunrise
+//  Negative offset = BEFORE sunset / sunrise  
 //-------------------------------------
 
 // Door opening offset from sunrise - GMT
