@@ -43,6 +43,8 @@ int sunsetCloseOffsetBST = +50;
 
 //------------------------------------
 //  LIGHT BST TIME (Summer)
+// Negitive offset = AFTER sunrise / sunset
+// Positive offset = BEFORE sunrise / sunset
 //------------------------------------
 
 // Coop light ON offset from sunset - BST
@@ -68,6 +70,8 @@ int sunsetCloseOffsetGMT = +30;
 
 //--------------------------------------
 //  LIGHT GMT TIME. (winter)
+// Negitive offset = AFTER sunrise / sunset
+// Positive offset = BEFORE sunrise / sunset
 //--------------------------------------
 
 /// Coop light ON offset from sunset - GMT
