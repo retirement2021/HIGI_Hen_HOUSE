@@ -47,7 +47,7 @@ int sunsetCloseOffsetBST = +50;
 
 // Coop light ON offset from sunset - BST
 // Negitive offset = AFTER  sunset
-int lightOnOffsetBST = -15; 
+int lightOnOffsetBST = -10; 
 
 // Coop light OFF offset from sunset - BST
 // Positive offset = AFTER sunset
@@ -118,7 +118,7 @@ const int ENVIRONMENT_LOG_DAYS = 30;
 //--------------------------------------
 // Door LED indications
 //--------------------------------------
-const unsigned long BEDTIME_FLASH_MS = 500;  // Sunset warning flash in milliseconds
+const unsigned long BEDTIME_FLASH_MS = 400;  // Sunset warning flash in milliseconds
 
 const unsigned long NIGHT_FLASH_MS = 1000;  // Door secured flash in milliseconds
 
@@ -129,27 +129,27 @@ const unsigned long NIGHT_FLASH_MS = 1000;  // Door secured flash in millisecond
 
 enum DisplayPage {
 
-  PAGE_MAIN, 
-  PAGE_MANUAL,
-  PAGE_ENVIRONMENT, 
-  PAGE_EVENTS,
-  PAGE_SYSTEM_WIFI,
-  PAGE_SYSTEM_TIME
+  PAGE_MAIN,        // Info Only
+  PAGE_MANUAL,      // Interactive
+  PAGE_ENVIRONMENT, // Scroll 
+  PAGE_EVENTS,      // Scroll
+  PAGE_SYSTEM_TIME, // Info Only
+  PAGE_SYSTEM_WIFI  // Info Only
 };
 
-DisplayPage currentPage = PAGE_MAIN;  // 1st page, can be changed
+DisplayPage currentPage = PAGE_MAIN;  // 1st page.
 
 
 // ======================================================
 // *******USER ADJUSTABLE TIMEOUTS********
 // ======================================================
 
-#define MOTOR_TIMEOUT (16 * SECOND)  // adjust for how long the door motor runs between limit switches. 
-                                     // check Event page to see how many seconds the door takes, eg 14.4S, Plus 1-2 seconds.
+#define MOTOR_TIMEOUT (16 * SECOND)  // Adjust for how long the door motor runs between limit switches. 
+                                     // Check Event page, eg "Door Open 14.4s" & "Door Close 13.9s", plus 1-2 seconds.
 
-#define SAFETY_TIMEOUT (2 * MINUTE)  // adjust for overall fail safe
+#define SAFETY_TIMEOUT (2 * MINUTE)  // Adjust for overall fail safe
 
-#define WIFI_RETRY_INTERVAL (45 * SECOND)  // if WiFi fails retry every __ until connected
+#define WIFI_RETRY_INTERVAL (45 * SECOND)  // If WiFi fails, retry every __ until connected
 
 // ======================================================
 // GPIO
