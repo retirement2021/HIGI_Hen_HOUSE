@@ -4,28 +4,29 @@
 This is an advanced Arduino sketch for an **ESP32-S3 based automatic chicken coop controller**. Here's what it does:
 
 ## Core Functionality
-- **Automated door control**: Opens at sunrise, closes at sunset with adjustable offsets
-- **Lighting automation**: Turns coop lights on/off based on sunset with separate timing
-- **Temperature/humidity coop monitoring**: DHT22 sensor with 90-day persistent logging
+- **Automated door control**: Opens at sunrise, closes at sunset with adjustable offsets in USER SETTINGS
+- **Lighting automation**: Turns coop lights on/off based on sunset with separate timing in USER SETTINGS
+- **Temperature/humidity coop monitoring**: DHT22 sensor with 30-day persistent logging. Can be altered in USER SETTINGS
 - **Manual override**: Rotary encoder for complete manual control
-- **Safety features**: Obstruction detection, motor timeouts, limit switch conflict detection
+- **Safety features**: Obstruction detection, motor timeouts, and limit switch conflict detection
 
 ## Key Features
 
 **Display & UI**
 - 1.3" OLED display with 6 pages (Main, Manual, Events, Environment, WiFi, System Time)
 - Rotary encoder navigation (KY-040)
-- Event logging (100 events stored)
+- Event logging (100 events stored) can be altered in USER SETTINGS
 - Scrollable event history
 
 **Automation & Timing**
-- Dual seasonal timing: separate parameters for BST (summer) and GMT (winter)
+- Dual seasonal timing: separate parameters for BST (summer) and GMT (winter) Altered in USER SETTINGS
 - Sunrise/sunset calculation based on GPS coordinates
 - WiFi NTP time sync with RTC (DS3231) fallback
 - Daily midnight reset
 
 **Safety & Fault Handling**
-- Motor timeout protection (default 15 seconds)
+- Motor timeout protection (default 15 seconds) Altered in USER SETTINGS
+- Motor obstruction timeout (defalt 18 seconds) Altered in USER SETTINGS
 - Safety obstruction cycle: if door blocked, opens and retries
 - Limit switch conflict detection
 - System lockout after repeated failures
@@ -35,11 +36,12 @@ This is an advanced Arduino sketch for an **ESP32-S3 based automatic chicken coo
 - Motor control via L298N/TB6612FNG driver
 - Relay-controlled coop light
 - Status LEDs (green for normal, red for fault)
-- Night mode LEDs with different flash patterns (sunset warning vs. secured door)
 - Active buzzer for alerts
+- Night mode LEDs with different flash patterns ( pulse for sunset warning vs. sequence flash for secured door)
+
 
 **Connectivity**
-- WiFi with auto-reconnect
+- WiFi with auto-reconnect Alter in USER SETTINGS
 - IP address and signal strength display
 - Graceful fallback to RTC when WiFi unavailable
 
@@ -49,6 +51,6 @@ This is an advanced Arduino sketch for an **ESP32-S3 based automatic chicken coo
 - Manual override tracks which action was taken to prevent conflicting automation
 - Comprehensive event timestamps and history
 - Watchdog timer (35-second timeout)
-- Persistent storage using Preferences for environment logs
+- Persistent storage using Preferences for environment logs, can be altered in USER SETTINGS
 
 
