@@ -1,4 +1,8 @@
-//System uses an ESP32S3 N16R8 board. Arduino IDE: ESP32S3 Dev Module
+// System uses an ESP32S3 N16R8 board. Arduino IDE: ESP32S3 Dev Module
+// Red LEDs above door, pulse to call chicken in and sequence flash for confirming door has closed properly.
+// Updated to include an additional MOTOR TIMEOUT RECOVERY in USER SETTINGS to further ensure reliable oporation.
+// Clearer descriptions in the USER SETTINGS
+// Fully tested and working
 //======================================================
 // LIBRARYS
 //======================================================
@@ -34,12 +38,12 @@ const unsigned long HOUR = 3600000UL;
 
 //  Door opening offset from sunrise - BST 
 //  Negative offset = BEFORE sunrise. Soltice Twilight Start -45. Default -25,
-int sunriseOpenOffsetBST = +20; 
+int sunriseOpenOffsetBST = -25; 
 
 // Door closing offset from sunset - BST
 // Positive offset = AFTER sunset. Soltice Twilight End +45. Default +50
 // ****
-int sunsetCloseOffsetBST = +30; 
+int sunsetCloseOffsetBST = +50; 
 
 //------------------------------------
 //  LIGHT BST TIME (Summer)
@@ -47,12 +51,12 @@ int sunsetCloseOffsetBST = +30;
 
 // Coop light ON offset from sunset - BST
 // Negitive offset = AFTER  sunset. Default -10
-int lightOnOffsetBST = +15; 
+int lightOnOffsetBST = -10; 
 
 // Coop light OFF offset from sunset - BST
 // Positive offset = AFTER sunset. Default +55
 // ****  (Example: Door closing offset +50, plus 5 minutes = 55) 
-int lightOffMinutesBST = +35;
+int lightOffMinutesBST = +55;
 
 //-------------------------------------
 //  DOOR GMT TIME. (winter)
@@ -60,12 +64,12 @@ int lightOffMinutesBST = +35;
 
 // Door opening offset from sunrise - GMT
 //  Positive offset = AFTER sunrise. Soltice Twilight Start -37. Default +10.
-int sunriseOpenOffsetGMT = +30; 
+int sunriseOpenOffsetGMT = +10; 
 
 // Door closing offset from sunset - GMT
 //Positive offset = AFTER sunset. Soltice Twilight End +37. Default +35,
 // ****
-int sunsetCloseOffsetGMT = +25; 
+int sunsetCloseOffsetGMT = +35; 
 
 //--------------------------------------
 //  LIGHT GMT TIME. (winter)
@@ -73,12 +77,12 @@ int sunsetCloseOffsetGMT = +25;
 
 // Coop light ON offset from sunset - GMT
 // Positive offset = BEFORE  sunset. Default +10
-int lightOnOffsetGMT = +15;  
+int lightOnOffsetGMT = +10;  
 
 // Coop light OFF offset from sunset - GMT
 // Positive offset = AFTER sunset. Default +35
 // **** (Example: Door closing offset +35, plus 5 minutes = 40)
-int lightOffMinutesGMT = +30;
+int lightOffMinutesGMT = +40;
 
 //======================================
 // Manual light auto OFF timer.
@@ -148,7 +152,7 @@ DisplayPage currentPage = PAGE_MAIN;  // 1st page, can be changed
 #define MOTOR_TIMEOUT (15 * SECOND)  // adjust for how long the door motor runs between the limit switches. 
                                      // check Event page, eg "Door Open 14.4s", "Door Close 13.9s", plus 1-2 seconds.
 
-#define MOTOR_TIMEOUT_RECOVERY (18 * SECOND) // additional time for door obstruction
+#define MOTOR_TIMEOUT_RECOVERY (18 * SECOND) // additional time for door obstruction detection
 
 #define SAFETY_TIMEOUT (2 * MINUTE)  // adjust for overall fail safe
 
@@ -169,7 +173,7 @@ DisplayPage currentPage = PAGE_MAIN;  // 1st page, can be changed
 #define BUZZER_PIN 3        // 3V Active Buzzer for alert fault and time out only. Connect to GND
 
 #define STATUS_LED_PIN 6    // GREEN LED to GND. System healthy. 2k+ resistor.
-#define FAULT_LED_PIN 7     // RED LED To GND. Fault and time out warning.1k resistor.
+#define FAULT_LED_PIN 7     // RED LED To GND. Fault and time out warning.1k+ resistor.
 
 #define NIGHT_LED1_PIN 11   // RED LED to GND. Installed above the Coop door for visual referance. 100-330R resistor.
 #define NIGHT_LED2_PIN 12   // RED LED to GND. Installed above the Coop door for visual referance. 100-330R resistor.
