@@ -2,9 +2,12 @@
 
 A reliable, fully automated chicken coop controller built around the **ESP32-S3**, designed for year-round unattended operation.
 
+All coding adjustable settings blocked together for easy customisation.
+
 This project automates the daily management of a hen house by controlling the coop door and lighting based on sunrise and sunset calculations, while continuously monitoring environmental conditions and protecting the system with multiple safety features.
 
 The firmware has been designed with robustness in mind, allowing it to continue operating even if Wi-Fi or internet access is unavailable.
+
 
 ---
 
@@ -14,6 +17,7 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 
 * Opens automatically at sunrise.
 * Closes automatically at sunset.
+* Configurable door open/close offsets.
 * Uses calculated sunrise and sunset times.
 * Seasonal adjustment for BST/GMT.
 * Safe motor control using limit switches.
@@ -27,11 +31,17 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 * Manual override available.
 * Automatic return to scheduled operation.
 
+### Manual Operations
+
+* Door Open/Close
+* Light On/Off
+
 ### 🌡️ Environmental Monitoring
 
 * Temperature monitoring.
 * Humidity monitoring.
 * Live readings displayed on the OLED screen.
+* Persistent 30day min & max temperature and humidity storage
 
 ### ⏰ Accurate Timekeeping
 
@@ -44,11 +54,12 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 
 Displays:
 
-* Current date and time
+* Current time
 * Temperature
 * Humidity
 * Sunrise and sunset times
-* Next scheduled events
+* Events history
+* Environment logging
 * Door status
 * Lighting status
 * Wi-Fi information
@@ -58,8 +69,10 @@ Displays:
 
 * Status LEDs
 * Audible buzzer notifications
-* Bedtime warning indication
 * Fault indication
+---
+* Door Bedtime warning indication
+* Door Night time indication
 
 ### 🛡️ Reliability Features
 
@@ -67,7 +80,6 @@ Displays:
 * Motor timeout protection
 * Door obstruction detection
 * Limit switch validation
-* Persistent configuration storage
 * Automatic recovery from power failures
 * Designed for continuous 24/7 operation
 
@@ -78,15 +90,17 @@ Displays:
 The project is designed around the following hardware:
 
 * ESP32-S3 (N16R8)
-* OLED display (U8g2)
-* DHT temperature/humidity sensor
+* OLED display 1.3" (U8g2)
+* DHT22 temperature/humidity sensor
 * DS3231 RTC module
-* DC motor with motor driver
-* Open limit switch
-* Closed limit switch
+* DC motor GB37-520
+* Motor driver L298N
+* Open limit reed switch
+* Closed limit reed switch
 * Status LEDs
 * Piezo buzzer
-* Manual override buttons/switches
+* Rotary encoder. KY–40
+* Logic level relay module (Coop light)
 
 ---
 
@@ -117,13 +131,14 @@ Once powered, the controller:
 
 Throughout the day the controller:
 
-* Opens the coop at sunrise.
+* Opens the coop at sunrise.(with offset)
 * Controls interior lighting according to schedule.
 * Continuously monitors temperature and humidity.
 * Updates the OLED display.
 * Monitors motor safety.
 * Detects faults and reports errors.
 * Stores settings in non-volatile memory.
+* Close the coop at sunset.(with offset)
 
 ---
 
