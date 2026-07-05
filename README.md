@@ -41,7 +41,7 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 * Temperature monitoring.
 * Humidity monitoring.
 * Live readings displayed on the OLED screen.
-* Persistent 30day min & max temperature and humidity storage
+* Persistent 30 day min & max temperature and humidity storage
 
 ### ⏰ Accurate Timekeeping
 
@@ -70,7 +70,6 @@ Displays:
 * Status LEDs
 * Audible buzzer notifications
 * Fault indication
----
 * Door Bedtime warning indication
 * Door Night time indication
 
