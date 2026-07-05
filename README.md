@@ -159,7 +159,7 @@ The focus throughout development has been on:
 
 # Future Improvements
 
-Planned ideas include:
+Possible ideas include:
 
 * Web-based configuration interface
 * OTA firmware updates
