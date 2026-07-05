@@ -70,8 +70,8 @@ Displays:
 * Status LEDs
 * Audible buzzer notifications
 * Fault indication
-* Door Bedtime warning indication
-* Door Night time indication
+* Coop door Bedtime warning indication
+* Coop door Night time indication
 
 ### 🛡️ Reliability Features
 
