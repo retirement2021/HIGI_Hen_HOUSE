@@ -2,7 +2,7 @@
 
 A reliable, fully automated chicken coop controller built around the **ESP32-S3**, designed for year-round unattended operation.
 
-All coding adjustable settings blocked together for easy customisation.
+All configurable settings put together for easy customisation in *User adjustable settings*
 
 This project automates the daily management of a hen house by controlling the coop door and lighting based on sunrise and sunset calculations, while continuously monitoring environmental conditions and protecting the system with multiple safety features.
 
@@ -31,7 +31,7 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 * Manual override available.
 * Automatic return to scheduled operation.
 
-### Manual Operations
+###   Manual Operations
 
 * Door Open/Close
 * Light On/Off
@@ -41,7 +41,7 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 * Temperature monitoring.
 * Humidity monitoring.
 * Live readings displayed on the OLED screen.
-* Persistent 30 day min & max temperature and humidity storage
+* Persistent 30 day min & max temperature and humidity storage with time and date stamps
 
 ### ⏰ Accurate Timekeeping
 
@@ -58,7 +58,7 @@ Displays:
 * Temperature
 * Humidity
 * Sunrise and sunset times
-* Events history
+* Events history with time stamps
 * Environment logging
 * Door status
 * Lighting status
@@ -94,12 +94,12 @@ The project is designed around the following hardware:
 * DS3231 RTC module
 * DC motor GB37-520
 * Motor driver L298N
-* Open limit reed switch
-* Closed limit reed switch
+* Open and close limit reed switch
 * Status LEDs
 * Piezo buzzer
 * Rotary encoder. KY–40
 * Logic level relay module (Coop light)
+* Coop door LEDs
 
 ---
 
@@ -130,14 +130,15 @@ Once powered, the controller:
 
 Throughout the day the controller:
 
-* Opens the coop at sunrise.(with offset)
+* Opens the coop door at sunrise.
 * Controls interior lighting according to schedule.
 * Continuously monitors temperature and humidity.
 * Updates the OLED display.
 * Monitors motor safety.
 * Detects faults and reports errors.
-* Stores settings in non-volatile memory.
-* Close the coop at sunset.(with offset)
+* Stores min/max temp & humidity in non-volatile memory.
+* Stores event history in volitile memory
+* Close the coop door at sunset.
 
 ---
 
@@ -171,21 +172,6 @@ The focus throughout development has been on:
 
 ---
 
-# Future Improvements
-
-Possible ideas include:
-
-* Web-based configuration interface
-* OTA firmware updates
-* MQTT / Home Assistant integration
-* SD card event logging
-* Solar battery monitoring
-* Remote notifications
-* Rain and weather integration
-* Camera support
-* Multiple coop profiles
-
----
 
 # License
 
