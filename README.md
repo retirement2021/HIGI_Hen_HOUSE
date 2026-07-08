@@ -131,13 +131,15 @@ Once powered, the controller:
 Throughout the day the controller:
 
 * Opens the coop door at sunrise.
-* Controls interior lighting according to schedule.
 * Continuously monitors temperature and humidity.
 * Updates the OLED display.
 * Monitors motor safety.
 * Detects faults and reports errors.
 * Stores min/max temp & humidity in non-volatile memory.
-* Stores event history in volitile memory
+* Stores event history in volitile memory.
+* Controls interior lighting according to schedule.
+* LEDs above the door to call the chickens in at dusk.
+* Automatic mechanism to detect and release a trapped chicken as the door is closing.
 * Close the coop door at sunset.
 
 ---
@@ -154,6 +156,7 @@ The firmware includes several layers of protection to help prevent equipment dam
 * RTC backup
 * Automatic recovery after power interruption
 * Watchdog monitoring
+
 
 ---
 
