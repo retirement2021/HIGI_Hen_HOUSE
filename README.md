@@ -89,6 +89,7 @@ Displays:
 The project is designed around the following hardware:
 
 * ESP32-S3 (N16R8)
+* LM2596 buck converter
 * OLED display 1.3" (U8g2)
 * DHT22 temperature/humidity sensor
 * DS3231 RTC module
