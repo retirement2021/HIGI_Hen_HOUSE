@@ -8,7 +8,7 @@ This project automates the daily management of a hen house by controlling the co
 
 The firmware has been designed with robustness in mind, allowing it to continue operating even if Wi-Fi or internet access is unavailable.
 
-* V1.17 sunrise and sunset with offsets for door open and close.
+* V1.17 sunrise and sunset with offsets for door open and close. Hens Only
 * V1.18 option to use fixed time or sunrise to open the door. Rooster noise control
 * V1.19 option to use a fixed time or sunrise to open the door in the summer only. Rooster noise control
 
