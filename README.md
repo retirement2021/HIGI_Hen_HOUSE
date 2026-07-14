@@ -8,6 +8,10 @@ This project automates the daily management of a hen house by controlling the co
 
 The firmware has been designed with robustness in mind, allowing it to continue operating even if Wi-Fi or internet access is unavailable.
 
+V1.17 sunrise and sunset with offsets for door open and close.
+V1.18 option to use fixed time or sunrise to open the door. Rooster noise control
+V1.19 option to use a fixed time or sunrise to open the door in the summer only. Rooster noise control
+
 
 ---
 
@@ -131,7 +135,7 @@ Once powered, the controller:
 
 Throughout the day the controller:
 
-* Opens the coop door at sunrise.
+* Opens the coop door at sunrise or fixed time.
 * Continuously monitors temperature and humidity.
 * Updates the OLED display.
 * Monitors motor safety.
@@ -141,7 +145,7 @@ Throughout the day the controller:
 * Controls interior lighting according to schedule.
 * LEDs above the door to call the chickens in at dusk.
 * Automatic mechanism to detect and release a trapped chicken as the door is closing.
-* Close the coop door at sunset.
+* Close the coop door at sunset with offset.
 
 ---
 
@@ -181,7 +185,7 @@ The focus throughout development has been on:
 
 This project is released under the MIT License.
 
-Feel free to use, modify and improve the code. Contributions, suggestions and pull requests are always welcome.
+Feel free to use, modify and improve the code. Contributions, suggestions are always welcome.
 
 ---
 
