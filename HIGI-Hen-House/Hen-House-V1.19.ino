@@ -46,7 +46,7 @@ const char systemVersion[] = "V1.19";
 // GMT (winter): Always sunrise + offset
 //
 // BST (summer): Choose fixed time OR sunrise + offset. 
-// false = Sunrise + offset (BST summer only)
+// false = Sunrise + offset (BST summer only) Hens Only
 // true  = Fixed time  (BST summer only) Rooster noise control
 bool useFixedOpenTime = true;
 
