@@ -43,8 +43,8 @@ const char systemVersion[] = "V1.18";
 // DOOR OPENING MODE, sunrise or fixed time
 //--------------------------------------
 
-// false = Door opens using Sunrise + Offset
-// true  = Door opens at the fixed time below
+// false = Door opens using Sunrise + Offset. Hens Only
+// true  = Door opens at the fixed time below. Rooster noise control
 bool useFixedOpenTime = false;
 
 // Fixed opening time (24-hour clock)
