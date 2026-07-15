@@ -3,7 +3,7 @@
 // The system uses a motor and cord guillotine style door.
 // All customisation is placed together in one block split into two parts ***USER SETTING*** & **USER MAGIC NUMBERS***
 // All controlled via a rotary encoder. Short press,wake and page change, >=1 second press toggle coop light on/off (manual page only), >=5 seconds fault reset
-// Addition of seasonal sunrise or fixed time door opening in the summer. Rooster noise control
+//Rooster Crow Control: Added an option for fixed time door-opening schedule to help prevent early morning crowing in the summer.
 //======================================================
 // LIBRARYS
 //======================================================
@@ -38,21 +38,6 @@ const unsigned long HOUR = 3600000UL;
 //--------------------------------------
 // Displayed firmware version
 const char systemVersion[] = "V1.19";
-
-//--------------------------------------
-// DOOR OPENING MODE (seasonal) 
-//--------------------------------------
-
-// GMT (winter): Always sunrise + offset
-//
-// BST (summer): Choose fixed time OR sunrise + offset. 
-// false = Sunrise + offset (BST summer only) Hens Only
-// true  = Fixed time  (BST summer only) Rooster noise control
-bool useFixedOpenTime = true;
-
-// Fixed opening time for BST summer (24-hour clock)
-int fixedDoorOpenHour = 6;
-int fixedDoorOpenMinute = 30;
 
 //-------------------------------------
 //  DOOR GMT TIME. (winter)
@@ -89,13 +74,26 @@ int lightOnOffsetGMT = -20;
 int lightOffMinutesGMT = +13;
 
 
+//--------------------------------------
+// DOOR OPENING MODE BST
+//--------------------------------------
+//
+// BST (summer): Choose fixed time OR sunrise + offset. 
+// false = Sunrise + offset (BST summer only) Hens Only
+// true  = Fixed time  (BST summer only) Rooster Crow Control
+bool useFixedOpenTime = true;
+
+// Fixed opening time for BST summer (24-hour clock)
+int fixedDoorOpenHour = 6;
+int fixedDoorOpenMinute = 30;
+
 //====================================
 //  DOOR BST TIME (summer)
 //------------------------------------
 // Positive offset = AFTER sunrise/sunset
 // Negative offset = BEFORE sunrise/sunset.
 
-//  MORNING - used when door opening mode above is set to false. (BST summer only)
+//  MORNING -Only used when door opening mode above is set to false. (BST summer only)
 //  Door opening offset from sunrise - BST
 //  Soltice twilight start -45 minutes. Default +20
 int sunriseOpenOffsetBST = +20;
@@ -1445,7 +1443,7 @@ void drawSystemTimePage() {
     snprintf(
       sunBuf,
       sizeof(sunBuf),
-      "Open %02d:%02d SS %02d:%02d",
+      "Open %d:%02d SS %02d:%02d",
       fixedDoorOpenHour,
       fixedDoorOpenMinute,
       actualSunset / 60,
