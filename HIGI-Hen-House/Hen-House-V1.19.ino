@@ -3,7 +3,7 @@
 // The system uses a motor and cord guillotine style door.
 // All customisation is placed together in one block split into two parts ***USER SETTING*** & **USER MAGIC NUMBERS***
 // All controlled via a rotary encoder. Short press,wake and page change, >=1 second press toggle coop light on/off (manual page only), >=5 seconds fault reset
-//Rooster Crow Control: Added an option for fixed time door-opening schedule to help prevent early morning crowing in the summer.
+// Rooster Crow Control: Added an option for fixed time door-opening schedule to help prevent early morning crowing in the summer.
 //======================================================
 // LIBRARYS
 //======================================================
