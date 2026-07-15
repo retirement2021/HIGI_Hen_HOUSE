@@ -44,7 +44,7 @@ const char systemVersion[] = "V1.18";
 //--------------------------------------
 
 // false = Door opens using Sunrise + Offset. Hens Only
-// true  = Door opens at the fixed time below. Rooster noise control
+// true  = Door opens at the fixed time below. Rooster Crow Control
 bool useFixedOpenTime = false;
 
 // Fixed opening time (24-hour clock)
@@ -1440,7 +1440,7 @@ void drawSystemTimePage() {
     snprintf(
         sunBuf,
         sizeof(sunBuf),
-        "OPEN %02d:%02d SS %02d:%02d",
+        "Open %d:%02d SS %02d:%02d",
         fixedDoorOpenHour,
         fixedDoorOpenMinute,
         actualSunset / 60,
