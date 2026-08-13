@@ -62,7 +62,7 @@ const char systemVersion[] = "V1.21";
 // Choose sunrise OR fixed opening time
 // false = Sunrise     (GMT Winter only) 
 // true  = Fixed time  (GMT Winter only) ~Rooster Crow Control
-bool useFixedOpenTimeGMT = true; 
+bool useFixedOpenTimeGMT = false; 
 
 // Fixed opening time for GMT Winter (24-hour clock)
 int fixedDoorOpenHourGMT = 8;     // GMT fixed open hour (24-hour)
@@ -97,7 +97,7 @@ int lightOnOffsetGMT = -20; // __ minutes before sunset
 //LIGHT OFF
 // Coop light OFF offset from sunset - GMT
 // **** Example: Door closing at +10, plus 3 minutes = +13 minutes.(light turns off 3 minutes after door closes)
-int lightOffMinutesGMT = +5;
+int lightOffMinutesGMT = +13;
 
 
 // SUMMER
@@ -112,8 +112,8 @@ int lightOffMinutesGMT = +5;
 bool useFixedOpenTime = true;
 
 // Fixed opening time for BST summer (24-hour clock)
-int fixedDoorOpenHour = 7;
-int fixedDoorOpenMinute = 59;
+int fixedDoorOpenHour = 6;
+int fixedDoorOpenMinute = 30;
 
 //------------------------------------
 //  DOOR BST TIME (summer)
@@ -143,7 +143,7 @@ int lightOnOffsetBST = -10;
 //LIGHT OFF
 // Coop light OFF offset from sunset - BST
 // **** Example: Door closing at +20, plus 3 minutes = +23.(light turns off 3 minutes after door closes)
-int lightOffMinutesBST = +5;
+int lightOffMinutesBST = +23;
 
 //--------------------------------------
 // Coop Door LED indications
