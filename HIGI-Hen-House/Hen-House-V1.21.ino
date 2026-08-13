@@ -11,7 +11,7 @@
 // Motor timeout protection to eliminate motor burnout on all door failures, found in ***USER MAGIC NUMBERS***. THIS MUST BE SET TO YOUR DOOR.
 // Door obstruction, chicken release logic, found in ***USER MAGIC NUMBERS***. THIS MUST BE SET TO YOUR DOOR.
 // All door and coop light timings easily configurable to suit your specific chicken habits in ***USER SETTING***
-// Rooster Crow Control: An option for fixed time door-opening schedule to help reduce early morning crowing.
+// Rooster Crow Control: An option for a fixed time door-opening schedule to help reduce early morning crowing.
 // System controlled via a rotary encoder. Short press <500ms,wake and page change & >=5 seconds fault reset.
 // Six display pages. Main, Timings, Environment, Events, wifi and a interactive manual page for opening/closing the door and light on/off
 // Temperature and humidity in the coop recorded for 30 days in non volitile memory
@@ -71,7 +71,6 @@ int fixedDoorOpenMinuteGMT =00;   // GMT fixed open minute
 //-------------------------------------
 //  DOOR GMT TIME. (winter)
 //-------------------------------------
-
 // Positive offset = AFTER  sunrise/sunset
 // Negative offset = BEFORE sunrise/sunset.
 
@@ -113,7 +112,7 @@ bool useFixedOpenTime = true;
 
 // Fixed opening time for BST summer (24-hour clock)
 int fixedDoorOpenHour = 6;
-int fixedDoorOpenMinute = 30;
+int fixedDoorOpenMinute = 45;
 
 //------------------------------------
 //  DOOR BST TIME (summer)
@@ -207,7 +206,7 @@ const int ENVIRONMENT_LOG_DAYS = 30; // Default 30
 
 
 // Door Obstruction Pause
-#define SAFETY_WAIT_AFTER_REOPEN_MS (2 * MINUTE)  // When the system registers a door obstruction, it re-opens the door (to release the hen)
+#define SAFETY_WAIT_AFTER_REOPEN_MS (2 * MINUTE)  // When the system registers a door obstruction, it automaticaly re-opens the door (to release the hen)
 //                                                   This function holds the door open for a pause of __ minutes before a retry of the auto door obstruction CLOSE. 
 //                                                   Allowing the released chicken time to re-enter the coop.
 
@@ -232,15 +231,15 @@ unsigned long buzzerRepeatInterval = (15 * SECOND);  // Fault buzzer repeat inte
 // DISPLAY
 unsigned long oledTimeout = (1 * MINUTE);  // Display sleeps after no activity.
 
-// ENUM DISPLAY PAGES
+// DISPLAY PAGES
 // Change the order of the display pages
 
 enum DisplayPage {
 
   PAGE_MAIN,         // Info Only
+  PAGE_MANUAL,       // Interactive
   PAGE_SYSTEM_TIME,  // Info only
   PAGE_ENVIRONMENT,  // Scroll info
-  PAGE_MANUAL,       // Interactive
   PAGE_EVENTS,       // Scroll info
   PAGE_SYSTEM_WIFI   // Info only
 
