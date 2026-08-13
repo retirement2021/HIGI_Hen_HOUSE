@@ -238,9 +238,9 @@ enum DisplayPage {
 
   PAGE_MAIN,         // Info Only
   PAGE_MANUAL,       // Interactive
-  PAGE_SYSTEM_TIME,  // Info only
   PAGE_ENVIRONMENT,  // Scroll info
   PAGE_EVENTS,       // Scroll info
+  PAGE_SYSTEM_TIME,  // Info only
   PAGE_SYSTEM_WIFI   // Info only
 
 };
