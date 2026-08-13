@@ -31,7 +31,7 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 * Manual override available.
 * Automatic return to scheduled operation.
 
-### 🐔 Manual Operations
+### 🔧 Manual Operations
 
 * Door Open/Close
 * Light On/Off
