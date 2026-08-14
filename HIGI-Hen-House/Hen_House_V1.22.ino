@@ -6,7 +6,7 @@
 // https://github.com/retirement2021/HIGI_Hen_HOUSE
 
 
-// V1.22 added a new display page to show today's door & light times including offsets.
+// V1.22 I added a new display page to show today's door & light times including offsets.
 
 
 // Requires a wifi signal, just enough to set NTP time.
