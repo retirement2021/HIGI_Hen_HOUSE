@@ -4,6 +4,8 @@
 // Febuary-August 2026
 // https://github.com/retirement2021/HIGI_Hen_HOUSE
 
+// Added fixed time door opening, for both GMT and BST to help reduce rooster crowing noise.
+
 // Requires a wifi signal, just enough to set NTP time.
 // Requires a permanent power source.
 // The system uses a geared motor and cord guillotine style door, cheap and reliable.
