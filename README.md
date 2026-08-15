@@ -1,7 +1,7 @@
 # 🐔 Hen House Automation (ESP32-S3)
 
-Version 1 with DHT22 temperature sensor has been retired. Proven sketch in a working coop.
-Version 2 with SHT31 temperature sensor will be developed, same code using a different sensor. 
+* Version 1 with DHT22 temperature sensor has been retired. Proven sketch in a working coop.
+* Version 2 with SHT31 temperature sensor will be developed, same code using a different sensor. 
 
 A reliable, fully automated chicken coop controller built around the **ESP32-S3**, designed for year-round unattended operation.
 
