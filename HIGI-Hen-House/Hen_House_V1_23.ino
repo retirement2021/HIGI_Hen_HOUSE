@@ -2,7 +2,7 @@
 // Arduino IDE: ESP32S3 Dev Module
 
 // By HIGI-Styx
-// Febuary-August 2026
+// Febuary-August 2026.
 
 // https://github.com/retirement2021/HIGI_Hen_HOUSE
 
