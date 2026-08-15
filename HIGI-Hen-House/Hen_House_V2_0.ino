@@ -1,7 +1,3 @@
-#include <Adafruit_SHT31.h>
-
-#include <Adafruit_SHT31.h>
-
 // System: ESP32S3 N16R8 board.
 // Arduino IDE: ESP32S3 Dev Module
 
