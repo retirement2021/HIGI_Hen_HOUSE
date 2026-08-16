@@ -1,3 +1,4 @@
+Set your wifi Credentials and location of the Chicken coop
 #pragma once
 
 // WiFi Credentials
