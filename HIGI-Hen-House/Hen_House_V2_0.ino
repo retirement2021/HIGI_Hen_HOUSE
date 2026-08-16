@@ -31,7 +31,6 @@
 #include <RTClib.h>
 #include "secrets.h"
 #include <U8g2lib.h>
-#include "esp_wifi.h"
 #include <Preferences.h>
 #include <esp_task_wdt.h>
 #include <Adafruit_SHT31.h>
@@ -3319,9 +3318,6 @@ void setup() {
 
     // Maximum transmit power
     WiFi.setTxPower(WIFI_POWER_19_5dBm);
-
-    // Lock WiFi bandwidth to 20MHz
-    esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20);
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
