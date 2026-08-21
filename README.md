@@ -4,7 +4,7 @@
 * Version 2 with SHT3x temperature sensor will be developed, same code using a different sensor.
 * 
 * Version 2.03 in the testing stage. Changed to SHT4x plus an additional SHT4x for outside temp with it own page and log.
-*   Coop door delay if the outside temp is colder than configured temperature a configurable delay time can be set.
+*   Coop door delay if the outside temp is colder than configured temperature a adjustable delay time can be set.
 *   A cold (blue) LED to illuminate when cold temperature is reached. (for visual reference) Operates 24/7.
 
 A reliable, fully automated chicken coop controller built around the **ESP32-S3**, designed for year-round unattended operation.
