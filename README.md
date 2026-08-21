@@ -1,11 +1,15 @@
 # 🐔 Hen House Automation (ESP32-S3)
 
 * Version 1 with DHT22 temperature sensor has been retired. Proven sketch in a working coop.
-* Version 2 with SHT31 temperature sensor will be developed, same code using a different sensor. 
+* Version 2 with SHT3x temperature sensor will be developed, same code using a different sensor.
+* 
+* Version 2.03 in the testing stage. Changed to SHT4x plus an additional SHT4x for outside temp with it own page and log.
+*   Coop door delay if the outside temp is colder than configured temperature a configurable delay time can be set.
+*   A cold (blue) LED to illuminate when cold temperature is reached. (for visual reference) Operates 24/7.
 
 A reliable, fully automated chicken coop controller built around the **ESP32-S3**, designed for year-round unattended operation.
 
-All configurable settings put together for easy customisation in *User adjustable settings*
+All configurable settings put together for easy customisation in *User adjustable settings* & *User Magic Numbers*
 
 This project automates the daily management of a hen house by controlling the coop door and lighting based on sunrise and sunset calculations, while continuously monitoring environmental conditions and protecting the system with multiple safety features.
 
@@ -116,7 +120,7 @@ Typical libraries used include:
 * RTClib
 * U8g2
 * DHT Sensor Library
-* NTPClient (or ESP32 time functions)
+* Adafruit SHTxx library
 
 ---
 
