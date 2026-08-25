@@ -3,7 +3,7 @@
 * Version 1 with DHT22 temperature sensor has been retired. Proven sketch in a working coop.
 * Version 2 with SHT3x temperature sensor will be developed, same code using a different sensor.
 * 
-* Version 2.03 in the testing stage. Changed to SHT4x plus an additional SHT4x for outside temp with it own page and log.
+* Version 2.01 in the testing stage. Changed to SHT3x plus an additional SHT3x for outside temp with it own page and log.
 *   Coop door delay if the outside temp is colder than configured temperature a adjustable delay time can be set.
 *   A cold (blue) LED to illuminate when cold temperature is reached. (for visual reference) Operates 24/7.
 
