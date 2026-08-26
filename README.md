@@ -23,6 +23,7 @@ The firmware has been designed with robustness in mind, allowing it to continue 
 ### 🚪 Automatic Coop Door
 
 * Opens automatically at sunrise or fixed time
+* Option to delay door opening in cold conditions
 * Closes automatically at sunset.
 * Configurable door open/close offsets.
 * Uses calculated sunrise and sunset times.
@@ -79,6 +80,7 @@ Displays:
 * Fault indication
 * Coop door Bedtime warning indication
 * Coop door Night time indication
+* Coop door extreme cold LED
 
 ### 🛡️ Reliability Features
 
@@ -98,7 +100,7 @@ The project is designed around the following hardware:
 * ESP32-S3 (N16R8)
 * LM2596 buck converter
 * OLED display 1.3" (U8g2)
-* SHT31 temperature/humidity sensor
+* SHT31/30 temperature/humidity sensor
 * DS3231 RTC module
 * DC motor GB37-520
 * Motor driver L298N
@@ -115,12 +117,17 @@ The project is designed around the following hardware:
 
 Typical libraries used include:
 
-* WiFi
-* Preferences
-* RTClib
-* U8g2
-* DHT Sensor Library
-* Adafruit SHTxx library
+* WiFi.h
+* Time.h
+* Math.h
+* Wire.h
+* Preferences.h
+* RTClib.h
+* esp_task_wdt.h
+* U8g2lib.h
+* SensirionI2cSht3x.h
+* AiEsp32RotaryEncoder,h
+* secretes
 
 ---
 
@@ -139,7 +146,8 @@ Once powered, the controller:
 Throughout the day the controller:
 
 * Opens the coop door at sunrise or fixed time.
-* Continuously monitors temperature and humidity.
+* Delays the coop door in extreme cold.
+* Continuously monitors temperature and humidity inside and outside.
 * Updates the OLED display.
 * Monitors motor safety.
 * Detects faults and reports errors.
@@ -147,6 +155,7 @@ Throughout the day the controller:
 * Stores event history in volitile memory.
 * Controls interior lighting according to schedule.
 * LEDs above the door to call the chickens in at dusk.
+* LED to show extreme cold
 * Automatic mechanism to detect and release a trapped chicken as the door is closing.
 * Close the coop door at sunset with offset.
 
