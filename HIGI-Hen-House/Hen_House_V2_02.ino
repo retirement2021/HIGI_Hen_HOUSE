@@ -243,12 +243,12 @@ const int MAX_OBSTRUCTION_RETRIES = 3;  // Number of attemps to fully close the 
 // SHT31 Inside temperature/humidity Sensor
 #define MAX_CONSECUTIVE_SHT_FAILURES 10        // Log fault after 10 consecutive failures
 #define SHT_FIRST_READ_DELAY_MS (60 * SECOND)  // Delay before first reading ( __ seconds for sensor settling) Default 60 seconds
-#define SHT_READ_INTERVAL_MS (17 * MINUTE)     // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
+#define SHT_READ_INTERVAL_MS (13 * MINUTE)     // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
 
 // SHT30 Outside temp/humidity sensor. (Offset from the SHT31's schedule to prevent I2C bus congestion)
 #define MAX_CONSECUTIVE_SHT_OUT_FAILURES 10            // Log fault after 10 consecutive failures
 #define OUTSIDE_SHT_FIRST_READ_DELAY_MS (75 * SECOND)  // Delay before first reading ( __ seconds for sensor settling) Default 75 seconds
-#define OUTSIDE_SHT_READ_INTERVAL_MS (13 * MINUTE)     // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
+#define OUTSIDE_SHT_READ_INTERVAL_MS (9 * MINUTE)      // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
 
 // SHT3x temperature sensor addresses
 const uint8_t INSIDE_SHT_ADDRESS = 0x45;   // SHT31 (Link VIN to address pin for address 0x45)
