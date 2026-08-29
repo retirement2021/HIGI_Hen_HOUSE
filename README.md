@@ -16,7 +16,7 @@ The controller also provides environmental monitoring, automatic lighting, an OL
 * 🕐 Separate GMT and BST schedules
 * 🌡️ Inside and outside temperature/humidity monitoring
 * ❄️ Cold-weather morning opening delay
-* 💡 Automatic evening lighting
+* 💡 Automatic evening coop lighting
 * 🔴 Progressive night/bedtime warning LEDs
 * 🛡️ Door obstruction detection and recovery
 * 🚪 Limit-switch monitoring and motor timeout protection
@@ -46,24 +46,24 @@ The door controller uses a state-machine architecture rather than simply running
 * Separate OPEN and CLOSED limit switches
 * Motor direction interlock
 * 50 ms direction-change safety delay
-* 15-second motor timeout
+* motor timeout
 * Door position detection at startup
 * Automatic homing if the door position is unknown
 * Limit-switch conflict detection
 * Closing obstruction detection
 * Automatic reopening after an obstruction
-* Three-minute chicken-release period
+* Times chicken-release period
 * Maximum obstruction retries
 * Fault and lockout states
 * Manual fault reset
 
-If the door encounters an obstruction while closing, the motor stops and the door automatically reopens to allow the Chicken to clear the area before attempting to close again.
+If the door encounters an obstruction while closing,  the door automatically reopens to allow the Chicken to clear the area before attempting to close again.
 
 ---
 
 # 🌅 Automatic Door Operation
 
-Door operation can be configured around **sunrise and sunset**, or fixed times can be used.
+Door operation can be configured around **sunrise and sunset**, or fixed open times can be used.
 
 Separate settings are available for:
 
@@ -81,11 +81,6 @@ The fixed opening times can be disabled to allow the door to operate relative to
 An external waterproof **SHT30 temperature/humidity sensor** monitors the outside temperature.
 
 If the outside temperature is below the configured threshold when the morning door opening is due, the system can delay opening.
-
-### Current settings
-
-**Cold threshold:** -3°C
-**Delay:** 35 minutes
 
 If the temperature rises above the threshold during the delay, the door can open immediately.
 
@@ -124,9 +119,9 @@ Data is stored using the ESP32 `Preferences` system so that it survives power lo
 
 The controller operates the hen-house light automatically around sunset.
 
-The evening warning system uses two LEDs to provide a visual indication as closing time approaches.
+The evening chicken homing system uses two LEDs to provide a visual indication as closing time approaches.
 
-The warning sequence progressively increases the flashing rate as the door-closing time gets closer.
+The homing sequence progressively increases the flashing rate as the door-closing time gets closer.
 
 Once the door is confirmed fully closed, the LEDs enter **night mode** and alternate throughout the night.
 
@@ -159,7 +154,7 @@ The OLED also enters power-save mode after a period of inactivity.
 
 # 📝 Event Logging
 
-The controller maintains a circular **200-entry event history**.
+The controller maintains a circular **200-entry event history** with time stamps.
 
 Events include:
 
@@ -238,8 +233,8 @@ The controller is designed so that normal hen-house automation does not depend o
 * Guillotine-style vertical door
 * Geared DC motor
 * Motor driver
-* OPEN limit switch
-* CLOSED limit switch
+* OPEN limit switch (reed switch)
+* CLOSED limit switch (reed switch)
 
 ### User control
 
@@ -287,11 +282,11 @@ The system also performs a door-position check during startup and will attempt t
 
 # 💾 Firmware
 
-**Current Version: V2.02**
+**Current Version: V2.04**
 
 The project has evolved through several revisions, including the transition from a DHT22 sensor to the SHT3x family and the addition of the external temperature sensor and cold-weather door protection.
 
-### V2.02 highlights
+### V2.04 highlights
 
 * SHT31 inside sensor
 * SHT30 outside sensor
@@ -307,7 +302,7 @@ The project has evolved through several revisions, including the transition from
 
 # 🔧 Development Notes
 
-The OLED, DS3231 and both environmental sensors share the same I²C bus.
+The OLED, DS3231 and both temperature sensors share the same I²C bus.
 
 Reliable physical wiring is important for I²C operation. In testing, intermittent display problems were ultimately traced to unreliable **fly-lead connections between the ESP32-S3 and OLED**. Replacing the leads and soldering the connections resolved the problem.
 
