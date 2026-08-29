@@ -23,7 +23,7 @@
  SHT31 Temperature sensor;
  https://www.aliexpress.com/item/1005010508352986.html?spm=a2g0o.order_list.order_list_main.10.44231802LtJmC7
 
- SHT40 Weather resistent Temperature Sensor;
+ SHT30 Weather resistent Temperature Sensor;
  https://www.aliexpress.com/item/1005009355182576.html?spm=a2g0o.order_list.order_list_main.5.67dd1802or8tiL
 
  Tactile switch for board reset;
@@ -31,9 +31,6 @@
 
 
  ====MOTOR====
-
- Reed switches x 2;
- https://www.aliexpress.com/item/1005006582268091.html?spm=a2g0o.order_list.order_list_main.68.7b3118025voFBR
 
  Motor 12v JGB37-520 22 RPM;
  https://www.aliexpress.com/item/1005005904931034.html?spm=a2g0o.order_list.order_list_main.96.7b3118025voFBR
@@ -44,17 +41,19 @@
  Motor controller l298N;
  https://www.aliexpress.com/item/1005009050262370.html?spm=a2g0o.order_list.order_list_main.101.7b3118025voFBR
 
+ Reed switches x 2;
+ https://www.aliexpress.com/item/1005006582268091.html?spm=a2g0o.order_list.order_list_main.68.7b3118025voFBR
 
 
  Note: I used 80lb fishing line to connect the motor pulley to the door and a fishing barrel weight of about 150g to take the slack up, when the door hits an obstruction (Chicken)
 
  ====POWER SUPPLY====
 
- DC to DC step down buck converter;
- https://www.aliexpress.com/item/1005009050262370.html?spm=a2g0o.order_list.order_list_main.101.7b3118025voFBR
-
  12V power supply;
  around 80-100W; https://www.aliexpress.com/item/1005007347340166.html?spm=a2g0o.order_list.order_list_main.57.7b3118025voFBR
+
+ DC to DC step down buck converter;
+ https://www.aliexpress.com/item/1005009050262370.html?spm=a2g0o.order_list.order_list_main.101.7b3118025voFBR
 
  ====FAULT WARNING======
 
@@ -63,6 +62,8 @@
  ====DOOR LEDs====
 
  2 x 5mm RED LEDs for over the door. 100←330R resitors for each
+
+ 1 x 5mm Blue LED for over the door. 5R-10R resistor
 
 
  LED bezels;
