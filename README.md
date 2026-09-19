@@ -22,11 +22,11 @@ The controller also provides environmental monitoring, automatic lighting, an OL
 * 🚪 Limit-switch monitoring and motor timeout protection
 * 🔒 Fault detection and lockout system
 * 🔔 Audible fault alarm
-* 📊 90-day environmental history
-* 📝 200-entry event log
+* 📊 14-day environmental history
+* 📝 100-entry event log
 * 🕰️ DS3231 RTC with NTP time synchronisation
 * 📶 Wi-Fi monitoring and automatic reconnection
-* 🖥️ 128×64 SH1106 OLED display
+* 🖥️ 128×64 SH1106 1.3" OLED display
 * 🎛️ Rotary encoder user interface
 * 💾 Persistent settings and data storage
 * 🐕 Watchdog protection for unattended operation
@@ -63,7 +63,7 @@ If the door encounters an obstruction while closing,  the door automatically reo
 
 # 🌅 Automatic Door Operation
 
-Door operation can be configured around **sunrise and sunset**, or fixed open times can be used.
+Door operation can be configured around **sunrise and sunset**, or fixed open times.
 
 Separate settings are available for:
 
@@ -109,7 +109,7 @@ The sensors monitor:
 * Daily maximum humidity
 * Time of recorded extremes
 
-Approximately **90 days of environmental history** is retained for both inside and outside measurements.
+Approximately **14 days of environmental history** is retained for both inside and outside measurements.
 
 Data is stored using the ESP32 `Preferences` system so that it survives power loss.
 
@@ -131,7 +131,7 @@ The coop light can also be operated manually using the rotary encoder.
 
 # 🖥️ User Interface
 
-A **128×64 SH1106 OLED** provides information and control without requiring a computer or web interface.
+A **128×64 SH1106 OLED** provides information and limited control without requiring a computer or web interface.
 
 The rotary encoder is used for navigation and manual control.
 
@@ -146,7 +146,7 @@ The rotary encoder is used for navigation and manual control.
 7. **Wi-Fi Status**
 8. **System Time**
 
-The display normally refreshes only when required to reduce unnecessary I²C activity. The system-time page updates once per second.
+The display normally refreshes only when required to reduce unnecessary I²C activity. 
 
 The OLED also enters power-save mode after a period of inactivity.
 
@@ -154,7 +154,7 @@ The OLED also enters power-save mode after a period of inactivity.
 
 # 📝 Event Logging
 
-The controller maintains a circular **200-entry event history** with time stamps.
+The controller maintains a circular **100-entry event history** with time stamps.
 
 Events include:
 
@@ -282,9 +282,9 @@ The system also performs a door-position check during startup and will attempt t
 
 # 💾 Firmware
 
-**Current Version: V2.04**
+**Current Version: V2.14**
 
-The project has evolved through several revisions, including the transition from a DHT22 sensor to the SHT3x family and the addition of the external temperature sensor and cold-weather door protection.
+The project has evolved through several revisions, including the transition from a DHT22 sensor to the SHT3x family and the addition of the external temperature sensor and cold-weather door protection. Additional refinements and tweaks to get as close to a plug and play install as i can.
 
 ### V2.04 highlights
 
