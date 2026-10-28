@@ -8,7 +8,9 @@
 //  https://github.com/retirement2021/HIGI_Hen_HOUSE for Robust versions, wiring diagrams, photos, 3D printing files, and a complete parts list.
 
 //V2.18
+// Final sketch
 // Added a page change debounce / minimum press filter (30 ms) as some pages could be missed when scrolling between pages.
+// fixed the hold for reset display notice to appear on every page when pressing for reset
 // Updated the the 5+ second encoder fault clear logic, once 5 seconds have passed it will reset while holding the button in as opposed to resetting on release.
 
 // V2.17
