@@ -1638,7 +1638,7 @@ void drawSchedulePage() {
 
   const int xLabel = 6;
   const int rightPad = 6;
-  const int yStart = 38;
+  const int yStart = 28;
   const int yStep = 12;
 
   // Line 1: Door Open
