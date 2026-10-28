@@ -3981,10 +3981,10 @@ void handleEventScroll() {
     }
 
     // =====================================================
-    // SHORT PRESS = CHANGE PAGE
+    // SHORT PRESS = CHANGE PAGE 
     // =====================================================
 
-    if (pressTime < 500) {
+    if (pressTime >= 30 && pressTime < 500) {  // can be set to 20 if pages skip
 
       // -------------------------------------------------
       // WAKE DISPLAY ONLY
