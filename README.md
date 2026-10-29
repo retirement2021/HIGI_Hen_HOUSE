@@ -66,23 +66,23 @@ The sketch comments identify the following hardware:
 ### Pin assignments
 
   Function                      ESP32-S3 GPIO
-  --------------------------- ---------------
-  Motor OPEN                               41
-  Motor CLOSE                              42
-  Upper/open limit switch                  15
-  Lower/closed limit switch                16
-  Coop light relay                         17
-  Buzzer                                    3
-  Green status LED                          6
-  Red fault LED                             7
-  Night/door LED 1                         11
-  Night/door LED 2                         12
-  Blue cold indicator LED                  13
-  Rotary encoder CLK                        4
-  Rotary encoder DT                         5
-  Rotary encoder switch                    18
-  I²C SDA                                   8
-  I²C SCL                                   9
+  --------------------------- ----------------  
+-   Motor OPEN                               41
+-   Motor CLOSE                              42
+-   Upper/open limit switch                  15
+-   Lower/closed limit switch                16
+-   Coop light relay                         17
+-   Buzzer                                    3
+-   Green status LED                          6
+-   Red fault LED                             7
+-   Night/door LED 1                         11
+-   Night/door LED 2                         12
+-   Blue cold indicator LED                  13
+-   Rotary encoder CLK                        4
+-   Rotary encoder DT                         5
+-   Rotary encoder switch                    18
+-   I²C SDA                                   8
+-   I²C SCL                                   9
 
 The limit switches are configured with `INPUT_PULLUP` and the sketch
 expects the switch input to go LOW when activated. Check the wiring and
