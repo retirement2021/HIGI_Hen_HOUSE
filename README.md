@@ -6,7 +6,7 @@
 **Development environment:** Arduino IDE\
 **Repository:** https://github.com/retirement2021/HIGI_Hen_HOUSE
 
-An automated chicken-coop controller for scheduled door movement and
+An automated chicken-coop controller for scheduled guillotine door movement and
 lighting, with temperature and humidity monitoring, a rotary-encoder
 OLED interface, event history, and door safety/recovery logic.
 
@@ -179,20 +179,21 @@ Important settings include:
 -   `MOTOR_TIMEOUT`: normal motor run-time limit.
 -   `MOTOR_TIMEOUT_RECOVERY`: extended timing used during obstruction
     recovery.
+These two values must be tuned to the installed mechanism. Measure actual
+travel time, use a small safety margin, and keep the timeout as short as
+the mechanism reliably permits. Do not increase a timeout simply to mask
+a mechanical or limit-switch fault.
+    
 -   `SAFETY_WAIT_AFTER_REOPEN_MS`: how long the door remains open after
     an obstruction reversal.
 -   `MAX_OBSTRUCTION_RETRIES`: number of obstruction retries.
 -   `MAX_LIMIT_RETRIES`: limit-switch retry protection.
 -   `SAFETY_TIMEOUT`: overall safety timeout.
 
-These values must be tuned to the installed mechanism. Measure actual
-travel time, use a small safety margin, and keep the timeout as short as
-the mechanism reliably permits. Do not increase a timeout simply to mask
-a mechanical or limit-switch fault.
 
 ### Sensors and environment history
 
--   Inside SHT31 address: `0x45`.
+-   Inside SHT31 address: `0x45`. LIN-Address link
 -   Outside SHT30 address: `0x44`.
 -   Inside sensor polling interval: configured by
     `SHT_READ_INTERVAL_MS`.
@@ -203,9 +204,7 @@ a mechanical or limit-switch fault.
 -   Consecutive sensor failure thresholds are configurable.
 
 The sketch stores selected environment data and settings in ESP32
-Preferences/NVS. NVS survives a normal reboot and sketch upload unless
-the code or an explicit erase operation clears it. Avoid unnecessary
-frequent writes to reduce flash wear.
+Preferences/NVS. NVS survives a normal reboot and sketch upload.
 
 ## OLED and rotary encoder
 
@@ -214,7 +213,8 @@ the Events page to browse events and on the Environment page to move
 between current readings, today's values, and saved history.
 
 On the Manual page, a press-and-hold in the light-control range toggles
-the coop light. Holding the encoder button for **5 seconds** clears the
+the coop light.
+Holding the encoder button for **5 seconds** clears the
 current fault/lockout state. Treat fault clearing as a recovery action,
 not proof that the underlying problem has been fixed.
 
@@ -227,7 +227,7 @@ timeout. A button press wakes it.
     modules.
 2.  Install the required Arduino libraries and select **ESP32S3 Dev
     Module**.
-3.  Create the local `secrets.h` file with Wi-Fi credentials; do not
+3.  Create the local `secrets.h` file with Wi-Fi credentials, lat and long coordinates ; do not
     publish it.
 4.  Compile and upload the sketch.
 5.  Confirm the OLED, RTC, Wi-Fi/time, and both temperature sensors (if
@@ -240,10 +240,11 @@ timeout. A button press wakes it.
 8.  Test the motor direction and limit-switch stopping behaviour with
     the mechanism safely supported and supervised.
 9.  Test obstruction recovery and fault/lockout handling without putting
-    an animal at risk.
+    an animal at risk. (block of wood)
 10. Verify the scheduled door and light times, manual controls,
-    cold-delay behaviour, and recovery after power loss.
-11. Supervise operation in the coop and inspect the event log for
+    and recovery after power loss.
+11. Test cold-delay behaviour. 
+12. Supervise operation in the coop and inspect the event log for
     unexpected resets, sensor faults, timeouts, or retries.
 
 Do not rely on the controller for unattended animal safety until the
@@ -277,8 +278,7 @@ complete installed system has been tested.
     changes fault clearing so the reset occurs while the encoder button
     is held for five seconds.
 -   **V2.17:** Adds DST transition validation logic and a GMT/BST flag
-    on the schedule page. The sketch comments identify March 2027 as the
-    next seasonal field test.
+    on the schedule page.
 -   Earlier version history is recorded in the comments at the top of
     the sketch.
 
