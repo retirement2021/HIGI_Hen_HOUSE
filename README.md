@@ -3,7 +3,8 @@
 
 An ESP32-based automatic coop controller for managing the door, lighting and environmental monitoring. It is designed for unattended operation, with manual controls and safety checks for the door mechanism.
 
-The Version 3 series is bolted onto the v2.22 sketch which is a robust build init's self. I tried only to add to it where required for integration with the other tabs. 
+The Version 3 series is bolted onto the v2.22 sketch which is a robust build in it's self. With just the code required for integration with the other tabs. 
+The only additional code added to the V2.22 was the upgrade from a coop light relay module to the YX-mos mosfet switch to enable the coop light dim to off instead of an abrupt light off.
 
 ## What it does
 
@@ -16,6 +17,32 @@ The Version 3 series is bolted onto the v2.22 sketch which is a robust build ini
 - **Coop lighting:** Scheduled lighting supports configurable PWM dimming and a gradual sunset fade. Manual light control is also available.
 - **Door safety:** Limit switches, movement timeouts, obstruction recovery, retry limits and fault lockout help protect the door mechanism.
 - **History and monitoring:** Temperature and humidity readings and daily history are maintained, with history saved in ESP32 non-volatile storage.
+
+## Features
+
+-   Automatic door opening and closing based on calculated
+    sunrise/sunset times or configurable fixed morning opening times.
+-   UK GMT/BST-aware local scheduling.
+-   Separate winter (GMT) and summer (BST) schedule settings.
+-   Optional cold-weather delay before morning opening, based on the
+    outdoor sensor.
+-   Automatic coop-light control, with a manual light override.
+-   Motor run-time protection, limit-switch handling, obstruction
+    reversal, retry handling, and fault lockout.
+-   Two red door-area LEDs for bedtime warnings and overnight
+    indication, plus a blue cold-weather indicator.
+-   Inside and outside temperature/humidity readings using SHT3x
+    sensors.
+-   OLED pages for status, schedule, manual controls, environment
+    history, events, cold/daytime settings, and Wi-Fi information.
+-   Rotary encoder for page navigation and controls.
+-   DS3231 real-time clock, Wi-Fi/NTP time synchronisation, and fallback
+    time seeding from the RTC.
+-   Non-volatile storage (ESP32 Preferences/NVS) for environment history
+    and selected settings.
+-   Status/fault LEDs, buzzer alerts, Wi-Fi retry handling, and watchdog
+    servicing.
+
 
 ## Hardware and software
 
