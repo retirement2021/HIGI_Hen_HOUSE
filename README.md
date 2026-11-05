@@ -59,7 +59,7 @@ Keep all sketch tabs and headers together in the Arduino sketch folder:
 - `OTA.ino` — password-protected OTA support
 - `HumTrend.h` — trend history data structure
 - `RemoteLog.h` — dashboard log buffer
-- `secrets.h` — credential template; replace the placeholders with your own Wi-Fi credentials and OTA password and lat/long coordinents before compiling.
+- `secrets.h` — credential template; add WiFi info, lat n long coordinates, and a OTA password before compiling
 
 ## Network and safety notes
 
