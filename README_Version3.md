@@ -2,13 +2,15 @@
 
 An ESP32-based automatic coop controller for managing the door, lighting and environmental monitoring. It is designed for unattended operation, with manual controls and safety checks for the door mechanism.
 
+The Version 3 series is bolted onto the v2.22 sketch which is a robust build init's self. I tried only to add to it where required for integration with the other tabs. 
+
 ## What it does
 
 - **Automatic door control:** Opens and closes to a configurable schedule based on sunrise/sunset or fixed times. UK GMT/BST changes are handled automatically.
 - **Cold-weather opening delay:** If the outside temperature is below the configured threshold, the scheduled morning opening can be delayed. The delay can be overridden in the settings.
 - **Manual bedtime close from the dashboard:** During the bedtime warning window, a glowing gold pill appears on the dashboard. This was added for evenings when cold, wind or rain makes it better for the chickens to close the coop early. Tap the pill to request a close; the ESP32 rechecks whether closing is allowed before moving the door. The page shows “Sending” and “Closing” feedback while the request is handled.
 - **Password-protected OTA updates:** Firmware can be uploaded over the LAN using ArduinoOTA, without connecting a USB cable. OTA is disabled while the door is moving.
-- **LAN dashboard:** View temperatures, humidity, daily minimums and maximums, trends, door and lighting status, schedule, cold-delay status and Wi-Fi signal. The dashboard refreshes about every five seconds.
+- **LAN dashboard:** scaled to fit onto a phone, View temperatures, humidity, daily minimums and maximums, trends, door and lighting status, schedule, cold-delay status and Wi-Fi signal. 
 - **Coop Log:** View recent system messages in the dashboard. The log is held in RAM and is cleared by a restart.
 - **Coop lighting:** Scheduled lighting supports configurable PWM dimming and a gradual sunset fade. Manual light control is also available.
 - **Door safety:** Limit switches, movement timeouts, obstruction recovery, retry limits and fault lockout help protect the door mechanism.
@@ -29,16 +31,10 @@ Keep all sketch tabs and headers together in the Arduino sketch folder:
 - `OTA.ino` — password-protected OTA support
 - `HumTrend.h` — trend history data structure
 - `RemoteLog.h` — dashboard log buffer
-- `secrets.h` — credential template; replace the placeholders with your own Wi-Fi credentials and OTA password before compiling
-
-## Credentials and setup
-
-Create a local `secrets.h` containing your Wi-Fi credentials and OTA password. **Do not publish this file**; it contains private credentials. Keep a safe backup of it outside the repository.
-
-The OTA password must be configured as `OTA_PASSWORD` in `secrets.h`. Configure the ESP32-S3 board, install the required libraries, then compile and upload using the Arduino IDE.
+- `secrets.h` — credential template; replace the placeholders with your own Wi-Fi credentials and OTA password and lat/long coordinents before compiling.
 
 ## Network and safety notes
 
-The dashboard uses plain HTTP and has **no login**. Anyone who can access the device on your local network may view the dashboard and may be able to request a door close while the board allows it. Use it only on a trusted LAN; do not expose it directly to the internet.
+The dashboard uses plain HTTP and has **no login**. Anyone who can access the device on your local network may view the dashboard and may be able to request a door close while the board allows it. Use it only on a trusted LAN; do not expose it directly to the internet. you will find the IP address on the "system WiFi" page of the control box. just type the IP address into your web browser.
 
 The browser is not the safety authority: the ESP32 checks the close conditions again before acting. The physical installation still needs suitable limit switches, correctly wired motor control, and safe mechanical travel.
