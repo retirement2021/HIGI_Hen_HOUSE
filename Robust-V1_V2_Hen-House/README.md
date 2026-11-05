@@ -1,6 +1,6 @@
 # HIGI Hen House --- ESP32 Automatic Coop Door
 
-**Firmware:** V2.18\
+**Firmware:** V2.22\
 **Author:** HIGI-Styx\
 **Platform:** ESP32-S3 N16R8\
 **Development environment:** Arduino IDE\

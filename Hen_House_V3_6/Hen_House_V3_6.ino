@@ -7,9 +7,94 @@
 
 //  https://github.com/retirement2021/HIGI_Hen_HOUSE for Robust versions, wiring diagrams, photos, 3D printing files, and a complete parts list.
 
+
+// V3.6
+// Added trend arrows to the inside and outside temperature cards, using the same method as the humidity arrows.
+// The arrow compares the newest sensor reading with the oldest of the last 7 readings. A change of 0.5C or more shows up/down, otherwise steady.
+// The arrow is blank until 3 readings have been taken after a reboot, and is cleared by a failed sensor read.
+// Both temperature cards now use the same thermometer icon. The bulb and stem take the card's temperature band colour, so they change colour as the temperature rises and falls.
+// The Timezone card on the dashboard is replaced by a Cold Delay card. It has a blue border, and the pill shows the cold delay setpoint (outsideTempTriggerC).
+// The pill turns blue when the blue cold LED condition is true or a cold door delay is pending, amber OVERRIDE when forceOpenDespiteCold is on, and grey OFF when the outside sensor is disabled.
+// The GMT/BST value is no longer sent to the dashboard.
+
+// V3.5
+// Added gradual PWM dimming to the coop light. The light now fades smoothly to near-zero over the last 2 minutes of its scheduled ON window, instead of cutting off abruptly.
+// The coop light on LIGHT_PIN (GPIO 17) is now driven by PWM through an XY-MOS MOSFET trigger module, replacing the simple relay on/off.
+// The fade is derived from the existing scheduled light-OFF time, so changing lightOnOffsetBST/GMT or lightOffMinutesBST/GMT automatically moves the fade with it.
+// Two fade curves are selectable in USER SETTINGS: linear, or perceptual (gamma-corrected), which holds brightness longer and eases off gently like a real sunset.
+// Fade duration, near-zero floor and gamma are all adjustable in the USER SETTINGS block, alongside the light offsets.
+// All light control now goes through a single setLightDuty() helper, so manual overrides and the auto schedule share the same brightness path.
+// setLightDuty() falls back to plain on/off if enableLightDimming is set false, preserving the old behaviour.
+// Migrated to the ESP32 Arduino core 3.x LEDC API (ledcAttach / ledcWrite by pin), replacing the removed ledcSetup / ledcAttachPin functions.
+
+// V3.04
+// Log lines are now stamped with the clock time as [HH:MM:SS] instead of uptime. The time is local (GMT/BST) and comes from the same system clock as getTime().
+// Lines logged before the clock is valid (early in setup, until NTP or the RTC seeds it) show [--:--:--]. Uptime is still shown on the dashboard.
+// The stamp is only added to the log buffer shown on the dashboard, the USB serial monitor output is unchanged.
+
+// V3.4
+// The dashboard can now close the coop door, during the bedtime window only. This is the first dashboard control. Everything else on the dashboard is still read-only.
+// The door pill turns gold and glows when closing is allowed. Tap it to close the door. When it is not gold, tapping does nothing.
+// Closing is allowed only while the bedtime warning is active (the coop light has come on and the door has not yet closed)
+// The page only sends the request. The board checks every condition again before moving the door and refuses (HTTP 409) if any has changed since the page last updated.
+// A dashboard close uses the same manual close routine as the manual button. It logs "Manual CLOSE", stops the bedtime countdown,then starts the alternating night flash at the bottom limit.
+// The coop light stays on for MANUAL_LIGHT_HOLD_MS after a dashboard close, then switches off.
+// Added a trend arrow to the inside and outside humidity cards: up, steady or down.
+// The board samples the humidity each time a sensor reading is taken (every 13 minutes inside, 9 minutes outside) and keeps the last 7. 
+// A change of 1.0 %RH or more across the window shows up or down, anything smaller shows steady. HUM_TREND_DEADBAND in Dashboard.ino sets the 1.0.
+// A failed or missing reading clears that sensor's history, so an old arrow cannot stay on screen. History is held in RAM and restarts after a reboot.
+// The trend is calculated on the board, so it survives page reloads and is the same on every device.
+
+// V3.3
+// Added a remote log. Everything printed with Log.print / Log.println / Log.printf,  it is still sent to Serial, so the USB serial monitor works as before.
+// Each log line is stamped with uptime as h:mm:ss. The log is emptied by a restart.
+// All Serial.print calls in the main sketch, Dashboard.ino and OTA.ino are now Log.print. Serial.begin is unchanged.
+// A "Coop Log" tile. Tapping it opens a collapsible log card. Clear only clears the screen, the board keeps its buffer.
+// The log page only requests data while the card is open. The data comes from /api/log and the dashboard has no separate log page.
+// The log shows "device restarted" after a reboot and "some lines were missed" if the page falls too far behind the buffer.
+// The log is paused with the rest of the dashboard while the door is moving, and catches up afterwards.
+// Added a boot line at startup: BOOT <version> reset=<reason> prevLoopStage=<n>. The reason is one of POWERON, EXT, SW, PANIC, INT_WDT, TASK_WDT, WDT, DEEPSLEEP, BROWNOUT or OTHER.
+// Added a colour change to the temperature cards to reflect the current temperatures
+
+// V3.2
+// Rearranged the cards on the dashboard.
+// Added today's minimum and maximum temperature to the inside and outside temperature cards.
+// Added an outside humidity card.
+
+// V3.1
+// Redesigned the dashboard, which looked blocky and unprofessional, to give it a cleaner, more professional look.
+// Added a temperature Difference card (inside minus outside temperature) and a Timezone card (GMT or BST).
+
+// V3.0
+// Added a read-only web dashboard, viewable on a PC or phone on the home network. The address is printed to Serial as "Dashboard: http://<ip>" each time WiFi connects.
+// Dashboard shows inside and outside temperature with today's min and max, the difference between them, inside humidity, door position, coop light, DAY/NIGHT mode, today's door and light times, RTC status, WiFi signal and uptime.
+// Dashboard header shows the firmware version taken from systemVersion, so it follows the version number automatically.
+// Dashboard code lives in its own tab (Dashboard.ino). The main sketch only calls dashboardSetup(), dashboardOnWifiConnected(), dashboardOnWifiLost() and dashboardLoop() (loopStage 16).
+// The web server stops when WiFi is lost and restarts when it reconnects. The existing WiFi retry and NTP logic is unchanged.
+// The web server is paused while the door is moving, so a stalled browser connection cannot delay the limit switch checks. The page holds its last values briefly and shows Offline until the door stops.
+// A failed or missing reading is shown as "--" on the dashboard instead of breaking the page, and the outside temperature is hidden once its reading is older than OUTSIDE_TEMP_STALE_MS.
+// A door fault or system lockout shows as a red FAULT on the dashboard.
+// Dashboard uptime uses the ESP32 hardware timer, so it does not reset at the 49.7 day millis() rollover.
+// Set the WiFi hostname to HenHouse-V3 so the board shows a name on the router.
+// Partition scheme changed to a 16MB layout with two 3MB app slots (room for future OTA updates). "Erase All Flash Before Sketch Upload" is now Disabled so the NVS history survives a USB upload.
+
+// V2.22
+// Environmental history rollover now saves the active calendar date in NVS, preventing loss of daily date tracking after a restart or power interruption.
+// Daily history is archived using the saved calendar date rather than subtracting 24 hours, avoiding incorrect dates during BST/GMT clock changes.
+// Rollover now runs before environmental sensor updates, ensuring the first readings of a new day are recorded against the correct daily statistics.
+// Added protection against environmental history rollover when the system clock moves backwards.
+
+// V2.21
+// Motor outputs are now set LOW as the first lines of setup(), before the OLED, NVS and welcome screen, so the motor pins never float during boot or after a watchdog reset.
+// Clearing a fault now re-derives the door state from the limit switches. If the door was stopped mid-travel, the morning auto-open check is re-armed.
+// Outside temperature is now only trusted for 3 hours after the last valid reading. A failed or disconnected SHT30 no longer holds a stale cold value that would delay the door or keep the Cold LED on.
+// A "WiFi Disabled" is now logged once per outage instead of every 30 minutes, to stop a long WiFi outage filling the event log.
+// Fixed millis() rollover (49.7 days uptime) in the manual light timeout, post-manual-close light hold and display notice timers, which could expire instantly if set just before rollover.
+// Added a no-valid-time alarm: if neither NTP nor the RTC provides a time for 1 hour, the red LED flashes slowly and the buzzer sounds, and "No time since HH:MM" is logged once. Door control is not blocked.
+
 // V2.20
 // Manual bedtime close: stops the homing LED sequence, holds both night LEDs solid ON, then starts the alternating night flash when the bottom limit is reached.
-// Coop light now stays on for MANUAL_LIGHT_HOLD_MS (default 30 s) after a manual bedtime close, then switches off.
+// Coop light now stays on for MANUAL_LIGHT_HOLD_MS __ minutes after a manual bedtime close, then switches off.
 // A manual close now cancels any in-flight safety recovery and resets the obstruction retry counter.
 // Added a manual-lock gate to startOpening()/startClosing() and a re-entry guard that stops an in-flight move before a manual command, preventing spurious Close Obstruction.
 // Obstruction reopen no longer clears the bedtime indicators when a manual bedtime close is pending.
@@ -97,6 +182,8 @@
 #include <RTClib.h>
 #include "secrets.h"
 #include <U8g2lib.h>
+#include "HumTrend.h"
+#include "RemoteLog.h"
 #include <Preferences.h>
 #include <esp_task_wdt.h>
 #include <SensirionI2cSht3x.h>
@@ -119,7 +206,7 @@ const unsigned long HOUR = 3600000UL;
 //  SYSTEM
 //--------------------------------------
 // Displayed firmware version
-const char systemVersion[] = "V2.20";
+const char systemVersion[] = "V3.6";
 
 //"""""""""""
 // WINTER
@@ -162,7 +249,7 @@ int sunsetCloseOffsetGMT = +10;  // __ minutes after sunset
 
 //LIGHT ON
 // Coop light ON offset from sunset - GMT
-int lightOnOffsetGMT = -13;  // __ minutes before sunset
+int lightOnOffsetGMT = -12;  // __ minutes before sunset
 
 //LIGHT OFF
 // Coop light OFF offset from sunset - GMT
@@ -179,6 +266,8 @@ int doorOpenDelayIfColdMinutes = +35;  // Minutes to delay door opening time.
 
 bool forceOpenDespiteCold = false;  // set true to ignore door cold-delay (persistent)
 
+// Outside reading older than this is ignored (dead/disconnected probe).
+const unsigned long OUTSIDE_TEMP_STALE_MS = 3 * HOUR;  // Cold delay and Cold LED then act as if no reading exists. Default 3 hours
 
 //""""""""""""
 // SUMMER
@@ -227,6 +316,29 @@ int lightOnOffsetBST = -7;
 // Coop light OFF offset from sunset - BST
 int lightOffMinutesBST = +13;
 
+
+//--------------------------------------
+// COOP LIGHT PWM DIMMING (XY-MOS on LIGHT_PIN, GPIO 17)
+//--------------------------------------
+// The coop light is driven by PWM through a MOSFET trigger module (XY-MOS).
+// Full brightness = LIGHT_FULL_DUTY, off = 0.
+// The 2-minute fade is derived from the scheduled LIGHT-OFF time, so changing
+// lightOffMinutesBST / lightOffMinutesGMT automatically moves the fade with it.
+
+bool enableLightDimming = true;  // false = old on/off behaviour (digitalWrite)
+const int PWM_FREQ_HZ = 5000;    // 5 kHz — above audible, fine for XY-MOS (0-20 kHz)
+const int PWM_RES_BITS = 8;      // 8-bit: 0-255
+
+const int LIGHT_FADE_MINUTES = 2;  // fade duration (minutes)
+const int LIGHT_NEAR_ZERO = 3;     // "near zero" duty at end of fade (0-255)
+const int LIGHT_FULL_DUTY = 255;   // full brightness duty
+
+// Fade curve:
+//   false = LINEAR     (duty falls in a straight line)
+//   true  = PERCEPTUAL (gamma-corrected; holds brightness, eases off gently)
+bool lightFadePerceptual = true;
+const float LIGHT_FADE_GAMMA = 2.2f;
+
 //--------------------------------------
 // Coop Door LED indications
 //--------------------------------------
@@ -255,7 +367,7 @@ const unsigned long NIGHT_FLASH_MS = 1200;  //  Flashes continuously overnight u
 // Manual bedtime door close: post-close coop light hold.
 //--------------------------------------
 // After a MANUAL door close during the evenings bedtime window sequence the coop light will stay on for __ after the door has closed
-const unsigned long MANUAL_LIGHT_HOLD_MS = 30 * SECOND;
+const unsigned long MANUAL_LIGHT_HOLD_MS = 3 * MINUTE;
 
 //======================================
 // Manual coop light auto OFF timer.
@@ -312,7 +424,7 @@ const int ENVIRONMENT_LOG_DAYS = 10;          // Inside env log.  Bug Note 2. Sa
 const int ENVIRONMENT_LOG_DAYS_OUTSIDE = 31;  // Outside env log. Bug Note 2. Safe 21 max 31 days
 
 // Events
-#define MAX_EVENTS 200  // Number of events stored in volatile storage. default 100, Max 200
+#define MAX_EVENTS 100  // Number of events stored in volatile storage. default 100, Max 200
 
 // WiFi
 #define WIFI_RETRY_INTERVAL (90 * SECOND)  // If WiFi fails, retry every __ until connected. Default 90 seconds
@@ -472,6 +584,19 @@ void refreshDisplayIfNeeded();
 
 void IRAM_ATTR readEncoderISR();
 
+// Dashboard.ino
+void dashboardSetup();
+void dashboardLoop();
+void dashboardOnWifiConnected();
+void dashboardOnWifiLost();
+void logBoot(int reason, unsigned prevStage);
+
+void dashboardHumiditySample(bool outside, float humidity);
+void dashboardTempSample(bool outside, float tempC);
+
+void setLightDuty(int duty);
+int computeScheduledLightDuty();
+
 // ======================================================
 // ROTARY ENCODER
 // ======================================================
@@ -574,7 +699,7 @@ char todayMaxTempTimeOutside[16] = "";
 char todayMinTempTimeOutside[16] = "";
 
 int environmentLogIndexOutside = -2;  // used by the outside environment page
-int environmentViewPos = 0;           // -2 = NVS IN, -1 = TODAY IN, 0 = NOW, 1 = TODAY OUT, 2
+int environmentViewPos = 0;           // -2 = NVS IN, -1 = TODAY IN, 0 = NOW, 1 = TODAY OUT, 2 = NVS OUT
 
 // Outside humidity (today)
 float todayMaxHumOutside = -100;
@@ -635,6 +760,7 @@ bool lightCycleComplete = false;
 
 bool bedtimeWarning = false;
 bool nightMode = false;
+bool nightFlashAfterReboot = false;  // set at boot if door not closed at night; starts night flash on next close
 
 unsigned long nightLedTimer = 0;
 bool nightLedState = false;
@@ -659,6 +785,14 @@ unsigned long lastWiFiAttempt = 0;
 int wifiRetryCount = 0;
 
 bool wifiConnected = false;
+bool wifiDisabledLogged = false;
+
+// No-valid-time alarm (RTC dead AND NTP failed). LED + buzzer only; door control is not blocked.
+const unsigned long TIME_LOST_ALARM_MS = 1 * HOUR;  // how long time must be missing before alarming
+unsigned long timeLostSince = 0;                    // millis() of first failed check, 0 = time OK
+bool timeAlarm = false;
+bool timeAlarmLogged = false;  // log the alarm once per outage
+char lastGoodTime[8] = "";     // last time seen, shown in the event
 
 // ======================================================
 // TIMERS
@@ -667,6 +801,14 @@ bool wifiConnected = false;
 unsigned long motorStartTime = 0;
 unsigned long lastCheck = 0;
 unsigned long lastOutsideReadMillis = 0;  // last successful outside SHT30 read (used to reset poll interval)
+// Outside temp is only trusted if a valid reading arrived recently
+
+// Outside temp is only trusted if a valid reading arrived recently
+unsigned long lastValidOutsideMillis = 0;
+
+bool outsideTempValid() {
+  return !isnan(currentTempOutside) && (millis() - lastValidOutsideMillis) < OUTSIDE_TEMP_STALE_MS;
+}
 
 float lastOpenTravelTime = 0;
 float lastCloseTravelTime = 0;
@@ -895,14 +1037,14 @@ const char* getWifiQuality() {
 
   // change the "text"of the strength of WiFi signal
   if (rssi >= -50) return "BEST -50 dBm";
-  if (rssi >= -62) return "GOOD -66 dBm";
-  if (rssi >= -67) return "FAIR -71 dBm";
-  if (rssi >= -72) return "OKAY -76 dBm";
-  if (rssi >= -77) return "POOR -81 dBm";
-  if (rssi >= -82) return "WEAK -86 dBm";
-  if (rssi >= -87) return "DIRE -91 dBm";  //enough for system requirements.
+  if (rssi >= -60) return "GOOD -60 dBm";
+  if (rssi >= -65) return "FAIR -65 dBm";
+  if (rssi >= -70) return "OKAY -70 dBm";
+  if (rssi >= -75) return "POOR -75 dBm";  // enough for V3 OTA firmware upload
+  if (rssi >= -80) return "WEAK -80 dBm";
+  if (rssi >= -85) return "DIRE -85 dBm";  //enough for system requirements, V2 firmware.
 
-  return "AWFUL -96 dBm";
+  return "AWFUL -95 dBm";
 }
 
 void setEvent(const char* msg) {
@@ -957,7 +1099,7 @@ void setEvent(const char* msg) {
 
   refreshDisplayIfNeeded();
 
-  Serial.println(msg);
+  Log.println(msg);
 }
 
 // ======================================================
@@ -1897,7 +2039,7 @@ void refreshDisplayIfNeeded() {
 
   if (oledSleeping) return;
 
-  if (noticeText[0] != '\0' && millis() >= noticeUntil) {
+  if (noticeText[0] != '\0' && (long)(millis() - noticeUntil) >= 0) {
     noticeText[0] = '\0';
     displayDirty = true;
   }
@@ -2041,19 +2183,10 @@ void updateEnvironment() {
   if (h < 0.0 || h > 100.0) valid = false;
 
   if (!valid) {
+    dashboardHumiditySample(false, NAN);
+    dashboardTempSample(false, NAN);
     consecutiveShtFailures++;
-    Serial.print("SHT3x Read Invalid (attempts=");
-    Serial.print(SHT_READ_RETRIES);
-    Serial.print(") temp=");
-    Serial.print(t);
-    Serial.print(" hum=");
-    Serial.println(h);
-
-    // Log fault after MAX_CONSECUTIVE_SHT_FAILURES consecutive failures
-    if (consecutiveShtFailures > MAX_CONSECUTIVE_SHT_FAILURES) {
-      setEvent("SHT31 IN FAULT");
-      consecutiveShtFailures = 0;
-    }
+    Log.print("SHT3x Read Invalid (attempts=");
     return;
   }
 
@@ -2062,7 +2195,8 @@ void updateEnvironment() {
 
   currentTemp = t;
   currentHumidity = h;
-
+  dashboardHumiditySample(false, h);
+  dashboardTempSample(false, t);
   struct tm timeinfo;
   if (!getTime(timeinfo)) {
     return;
@@ -2120,7 +2254,8 @@ void updateOutsideColdLed() {
   }
 
   // If we have a valid outside temperature reading and it's below trigger -> ON
-  if (!isnan(currentTempOutside) && currentTempOutside < outsideTempTriggerC) {
+  //if (!isnan(currentTempOutside) && currentTempOutside < outsideTempTriggerC) {
+  if (outsideTempValid() && currentTempOutside < outsideTempTriggerC) {
     digitalWrite(COLD_LED_PIN, HIGH);
   } else {
     digitalWrite(COLD_LED_PIN, LOW);
@@ -2179,16 +2314,12 @@ void updateOutsideEnvironment() {
   if (h < 0.0 || h > 100.0) valid = false;
 
   if (!valid) {
+    dashboardHumiditySample(true, NAN);
+    dashboardTempSample(false, NAN);
     consecutiveShtFailures++;
-    Serial.print("SHT30 OUT Read Invalid temp=");
-    Serial.print(t);
-    Serial.print(" hum=");
-    Serial.println(h);
+    Log.print("SHT30 OUT Read Invalid temp=");
 
-    if (consecutiveShtFailures > MAX_CONSECUTIVE_SHT_OUT_FAILURES) {
-      setEvent("SHT30 OUT FAULT");
-      consecutiveShtFailures = 0;
-    }
+    updateOutsideColdLed();
     return;
   }
 
@@ -2196,6 +2327,16 @@ void updateOutsideEnvironment() {
   consecutiveShtFailures = 0;
 
   currentTempOutside = t;
+  lastValidOutsideMillis = millis();
+  currentHumidityOutside = h;
+  dashboardHumiditySample(true, h);
+  dashboardTempSample(true, t);
+
+  // Valid reading — reset failure counter
+  consecutiveShtFailures = 0;
+
+  currentTempOutside = t;
+  lastValidOutsideMillis = millis();
   currentHumidityOutside = h;
 
   struct tm timeinfo;
@@ -2269,6 +2410,7 @@ bool pollOutsideSensorNow(int maxAttempts = 3) {
 
         // Update the live values
         currentTempOutside = temperature;
+        lastValidOutsideMillis = millis();
         currentHumidityOutside = humidity;
 
         // Reset outside read timer to now (fresh interval)
@@ -2339,9 +2481,12 @@ bool pollOutsideSensorNow(int maxAttempts = 3) {
   return false;
 }
 
+
 void rolloverEnvironmentLog() {
 
-  static int loggedDay = -1;
+  static bool dateLoaded = false;
+  static bool clockBackwardsLogged = false;
+  static uint32_t loggedDate = 0;
 
   struct tm timeinfo;
 
@@ -2349,37 +2494,94 @@ void rolloverEnvironmentLog() {
     return;
   }
 
-  if (loggedDay == -1) {
-    loggedDay = timeinfo.tm_mday;
+  // Build today's local calendar date: YYYYMMDD
+  uint32_t currentDate =
+    (uint32_t)(timeinfo.tm_year + 1900) * 10000UL + (uint32_t)(timeinfo.tm_mon + 1) * 100UL + (uint32_t)timeinfo.tm_mday;
+
+  // ==========================================
+  // LOAD THE LAST RECORDED DATE FROM NVS
+  // ==========================================
+
+  if (!dateLoaded) {
+
+    if (!preferences.begin("envlog", true)) {
+      return;
+    }
+
+    loggedDate = preferences.getUInt("activeDate", 0);
+
+    preferences.end();
+
+    // First installation of this date tracking.
+    // Associate existing daily readings with today's date.
+    if (loggedDate == 0) {
+
+      if (!preferences.begin("envlog", false)) {
+        return;
+      }
+
+      size_t written = preferences.putUInt("activeDate", currentDate);
+
+      preferences.end();
+
+      if (written != sizeof(currentDate)) {
+        Log.println("Environment date initialisation failed");
+        return;
+      }
+
+      loggedDate = currentDate;
+      dateLoaded = true;
+
+      Log.println("Environment date initialised");
+
+      return;
+    }
+
+    dateLoaded = true;
+  }
+
+  // No rollover required
+  if (currentDate == loggedDate) {
+    clockBackwardsLogged = false;
     return;
   }
 
-  if (timeinfo.tm_mday == loggedDay) {
+  // Do not roll backwards if the system clock is corrected.
+  if (currentDate < loggedDate) {
+
+    if (!clockBackwardsLogged) {
+      Log.println("Environment date: clock moved backwards");
+      clockBackwardsLogged = true;
+    }
+
     return;
   }
 
-  loggedDay = timeinfo.tm_mday;
+  clockBackwardsLogged = false;
 
   // ==========================================
-  // SHIFT HISTORY (inside)
+  // RECONSTRUCT THE DATE OF THE SAVED READINGS
   // ==========================================
-  for (int i = ENVIRONMENT_LOG_DAYS - 1; i > 0; i--) {
-    climateLog[i] = climateLog[i - 1];
+
+  int savedYear = loggedDate / 10000;
+  int savedMonth = (loggedDate / 100) % 100;
+  int savedDay = loggedDate % 100;
+
+  struct tm archivedDate = {};
+
+  archivedDate.tm_year = savedYear - 1900;
+  archivedDate.tm_mon = savedMonth - 1;
+  archivedDate.tm_mday = savedDay;
+  archivedDate.tm_hour = 12;
+  archivedDate.tm_isdst = -1;
+
+  // Calculate weekday using the calendar date,
+  // not by subtracting 24 hours.
+  if (mktime(&archivedDate) == (time_t)-1 || archivedDate.tm_year != savedYear - 1900 || archivedDate.tm_mon != savedMonth - 1 || archivedDate.tm_mday != savedDay) {
+
+    Log.println("Environment log date invalid");
+    return;
   }
-
-  // SHIFT HISTORY (outside)
-  for (int i = ENVIRONMENT_LOG_DAYS_OUTSIDE - 1; i > 0; i--) {
-    climateLogOutside[i] = climateLogOutside[i - 1];
-  }
-
-  // ==========================================
-  // STORE YESTERDAY (Calculate previous day)
-  // ==========================================
-  time_t now;
-  time(&now);
-  time_t yesterday = now - (24 * 60 * 60);  // Subtract 24 hours
-  struct tm yesterdayInfo;
-  localtime_r(&yesterday, &yesterdayInfo);
 
   const char* days[] = {
     "Sun", "Mon", "Tue", "Wed",
@@ -2392,89 +2594,131 @@ void rolloverEnvironmentLog() {
     "Sep", "Oct", "Nov", "Dec"
   };
 
-  // Inside: store yesterday's date & stats
+  // Open NVS before changing the RAM history.
+  if (!preferences.begin("envlog", false)) {
+    Log.println("Environment rollover: NVS open failed");
+    return;
+  }
+
+  // ==========================================
+  // SHIFT HISTORY (INSIDE)
+  // ==========================================
+
+  for (int i = ENVIRONMENT_LOG_DAYS - 1; i > 0; i--) {
+    climateLog[i] = climateLog[i - 1];
+  }
+
+  // ==========================================
+  // SHIFT HISTORY (OUTSIDE)
+  // ==========================================
+
+  for (int i = ENVIRONMENT_LOG_DAYS_OUTSIDE - 1; i > 0; i--) {
+    climateLogOutside[i] = climateLogOutside[i - 1];
+  }
+
+  // ==========================================
+  // ARCHIVE PREVIOUS INSIDE READINGS
+  // ==========================================
+
   snprintf(
     climateLog[0].dateString,
     sizeof(climateLog[0].dateString),
     "%s %02d %s",
-    days[yesterdayInfo.tm_wday],
-    yesterdayInfo.tm_mday,
-    months[yesterdayInfo.tm_mon]);
+    days[archivedDate.tm_wday],
+    archivedDate.tm_mday,
+    months[archivedDate.tm_mon]);
 
   climateLog[0].maxTemp = todayMaxTemp;
   climateLog[0].minTemp = todayMinTemp;
   climateLog[0].maxHum = todayMaxHum;
   climateLog[0].minHum = todayMinHum;
 
-  strncpy(climateLog[0].maxTempTime, todayMaxTempTime, sizeof(climateLog[0].maxTempTime) - 1);
+  strncpy(climateLog[0].maxTempTime, todayMaxTempTime,
+          sizeof(climateLog[0].maxTempTime) - 1);
   climateLog[0].maxTempTime[sizeof(climateLog[0].maxTempTime) - 1] = '\0';
-  strncpy(climateLog[0].minTempTime, todayMinTempTime, sizeof(climateLog[0].minTempTime) - 1);
-  climateLog[0].minTempTime[sizeof(climateLog[0].minTempTime) - 1] = '\0';
-  strncpy(climateLog[0].maxHumTime, todayMaxHumTime, sizeof(climateLog[0].maxHumTime) - 1);
-  climateLog[0].maxHumTime[sizeof(climateLog[0].maxHumTime) - 1] = '\0';
-  strncpy(climateLog[0].minHumTime, todayMinHumTime, sizeof(climateLog[0].minHumTime) - 1);
-  climateLog[0].minHumTime[sizeof(climateLog[0].minHumTime) - 1] = '\0';
-  //climateLogOutside[0].minTempTime[sizeof(climateLogOutside[0].minTempTime) - 1] = '\0';
 
-  // Outside: store yesterday's date & stats
+  strncpy(climateLog[0].minTempTime, todayMinTempTime,
+          sizeof(climateLog[0].minTempTime) - 1);
+  climateLog[0].minTempTime[sizeof(climateLog[0].minTempTime) - 1] = '\0';
+
+  strncpy(climateLog[0].maxHumTime, todayMaxHumTime,
+          sizeof(climateLog[0].maxHumTime) - 1);
+  climateLog[0].maxHumTime[sizeof(climateLog[0].maxHumTime) - 1] = '\0';
+
+  strncpy(climateLog[0].minHumTime, todayMinHumTime,
+          sizeof(climateLog[0].minHumTime) - 1);
+  climateLog[0].minHumTime[sizeof(climateLog[0].minHumTime) - 1] = '\0';
+
+  // ==========================================
+  // ARCHIVE PREVIOUS OUTSIDE READINGS
+  // ==========================================
+
   snprintf(
     climateLogOutside[0].dateString,
     sizeof(climateLogOutside[0].dateString),
     "%s %02d %s",
-    days[yesterdayInfo.tm_wday],
-    yesterdayInfo.tm_mday,
-    months[yesterdayInfo.tm_mon]);
+    days[archivedDate.tm_wday],
+    archivedDate.tm_mday,
+    months[archivedDate.tm_mon]);
 
-  // Temperatures
   climateLogOutside[0].maxTemp = todayMaxTempOutside;
   climateLogOutside[0].minTemp = todayMinTempOutside;
-
-  // copy temperature timestamps
-  strncpy(climateLogOutside[0].maxTempTime, todayMaxTempTimeOutside, sizeof(climateLogOutside[0].maxTempTime) - 1);
-  climateLogOutside[0].maxTempTime[sizeof(climateLogOutside[0].maxTempTime) - 1] = '\0';
-  strncpy(climateLogOutside[0].minTempTime, todayMinTempTimeOutside, sizeof(climateLogOutside[0].minTempTime) - 1);
-  climateLogOutside[0].minTempTime[sizeof(climateLogOutside[0].minTempTime) - 1] = '\0';
-
-  // Humidity copy values and timestamps
   climateLogOutside[0].maxHum = todayMaxHumOutside;
   climateLogOutside[0].minHum = todayMinHumOutside;
 
-  strncpy(climateLogOutside[0].maxHumTime, todayMaxHumTimeOutside, sizeof(climateLogOutside[0].maxHumTime) - 1);
+  strncpy(climateLogOutside[0].maxTempTime, todayMaxTempTimeOutside,
+          sizeof(climateLogOutside[0].maxTempTime) - 1);
+  climateLogOutside[0].maxTempTime[sizeof(climateLogOutside[0].maxTempTime) - 1] = '\0';
+
+  strncpy(climateLogOutside[0].minTempTime, todayMinTempTimeOutside,
+          sizeof(climateLogOutside[0].minTempTime) - 1);
+  climateLogOutside[0].minTempTime[sizeof(climateLogOutside[0].minTempTime) - 1] = '\0';
+
+  strncpy(climateLogOutside[0].maxHumTime, todayMaxHumTimeOutside,
+          sizeof(climateLogOutside[0].maxHumTime) - 1);
   climateLogOutside[0].maxHumTime[sizeof(climateLogOutside[0].maxHumTime) - 1] = '\0';
-  strncpy(climateLogOutside[0].minHumTime, todayMinHumTimeOutside, sizeof(climateLogOutside[0].minHumTime) - 1);
+
+  strncpy(climateLogOutside[0].minHumTime, todayMinHumTimeOutside,
+          sizeof(climateLogOutside[0].minHumTime) - 1);
   climateLogOutside[0].minHumTime[sizeof(climateLogOutside[0].minHumTime) - 1] = '\0';
+
   // ==========================================
-  // RESET FOR NEW DAY (inside)
+  // RESET INSIDE DAILY VALUES
   // ==========================================
+
   todayMaxTemp = -100;
   todayMinTemp = 100;
   todayMaxHum = -100;
   todayMinHum = 100;
+
   strcpy(todayMaxTempTime, "");
   strcpy(todayMinTempTime, "");
   strcpy(todayMaxHumTime, "");
   strcpy(todayMinHumTime, "");
 
-  // Reset outside day (temp + humidity)
+  // ==========================================
+  // RESET OUTSIDE DAILY VALUES
+  // ==========================================
+
   todayMaxTempOutside = -100;
   todayMinTempOutside = 100;
   todayMaxHumOutside = -100;
   todayMinHumOutside = 100;
+
   strcpy(todayMaxTempTimeOutside, "");
   strcpy(todayMinTempTimeOutside, "");
   strcpy(todayMaxHumTimeOutside, "");
   strcpy(todayMinHumTimeOutside, "");
 
   // ==========================================
-  // PERSIST BOTH HISTORIES AND NEW TODAY DATA
+  // SAVE BOTH HISTORIES AND NEW DAILY VALUES
   // ==========================================
-  preferences.begin("envlog", false);
 
-  // Save updated inside and outside histories
   preferences.putBytes("history_in", climateLog, sizeof(climateLog));
+
   preferences.putBytes("history_out", climateLogOutside, sizeof(climateLogOutside));
 
-  // Save the freshly reset INSIDE today's values
+  // INSIDE
   preferences.putFloat("todayMaxTemp", todayMaxTemp);
   preferences.putFloat("todayMinTemp", todayMinTemp);
   preferences.putFloat("todayMaxHum", todayMaxHum);
@@ -2485,8 +2729,7 @@ void rolloverEnvironmentLog() {
   preferences.putString("maxHumTime", todayMaxHumTime);
   preferences.putString("minHumTime", todayMinHumTime);
 
-  // Save the freshly reset OUTSIDE today's values
-  // TODAY'S OUTSIDE
+  // OUTSIDE
   preferences.putFloat("outMaxTemp", todayMaxTempOutside);
   preferences.putFloat("outMinTemp", todayMinTempOutside);
   preferences.putFloat("outMaxHum", todayMaxHumOutside);
@@ -2497,10 +2740,16 @@ void rolloverEnvironmentLog() {
   preferences.putString("outMaxHumTime", todayMaxHumTimeOutside);
   preferences.putString("outMinHumTime", todayMinHumTimeOutside);
 
+  // Update date only after saving the rollover data.
+  preferences.putUInt("activeDate", currentDate);
+
   preferences.end();
 
-  Serial.println("Environment log rolled");
+  loggedDate = currentDate;
+
+  Log.println("Environment log rolled");
 }
+
 
 // ======================================================
 // UNIFIED PERSISTENCE: Inside + Outside Daily Data
@@ -2604,7 +2853,7 @@ void stopMotor() {
 
 void updateBuzzerPattern() {
 
-  if (faultState != FAULT_ACTIVE && !systemLockout) {
+  if (faultState != FAULT_ACTIVE && !systemLockout && !timeAlarm) {
     digitalWrite(BUZZER_PIN, LOW);
     buzzerStep = 0;
     buzzerState = false;
@@ -2678,7 +2927,7 @@ void updateStatusLEDs() {
   // NORMAL OPERATION
   // ==========================================
 
-  if (faultState == FAULT_NONE && !systemLockout) {
+  if (faultState == FAULT_NONE && !systemLockout && !timeAlarm) {
 
     digitalWrite(STATUS_LED_PIN, HIGH);  // GREEN ON
 
@@ -2693,7 +2942,7 @@ void updateStatusLEDs() {
 
   digitalWrite(STATUS_LED_PIN, LOW);  // GREEN OFF
 
-  unsigned long flashRate = systemLockout ? 150 : 500;
+  unsigned long flashRate = systemLockout ? 150 : (faultState == FAULT_ACTIVE ? 500 : 1000);
 
   if (millis() - lastFaultLedToggle >= flashRate) {
 
@@ -2712,6 +2961,18 @@ void updateStatusLEDs() {
 void clearFaultState() {
 
   stopMotor();
+
+  // Re-derive door state from the limit switches (stopMotor() leaves it STOPPED)
+  if (openLimitHit()) {
+    doorState = DOOR_OPEN;
+  } else if (closeLimitHit()) {
+    doorState = DOOR_CLOSED;
+  } else {
+    // Stopped mid-travel: let the daytime auto-open run again
+    doorState = DOOR_UNKNOWN;
+    coldDelayCheckedDay = -1;
+    delayedOpenTime = -1;
+  }
 
   faultState = FAULT_NONE;
 
@@ -2804,7 +3065,7 @@ void triggerLockout(const char* reason) {
   setEvent("SYSTEM LOCKOUT");
   setEvent(reason);
 
-  Serial.println("!!! LOCKOUT TRIGGERED !!!");
+  Log.println("!!! LOCKOUT TRIGGERED !!!");
 }
 
 // ======================================================
@@ -2919,6 +3180,50 @@ void startClosing() {
 }
 
 // ======================================================
+// MANUAL CLOSE (shared by encoder and dashboard)
+// ======================================================
+bool manualCloseRequested() {
+
+  if (closeLimitHit()) {
+    oledNotice("Already CLOSED");
+    return false;
+  }
+
+  manualMoveActive = true;
+
+  // A manual command supersedes any in-flight safety recovery.
+  safetyState = SAFETY_IDLE;
+  safetyStartTime = 0;
+  safetyOpenReachedTime = 0;
+  obstructionRetries = 0;
+
+  struct tm timeinfo;
+  if (getTime(timeinfo)) {
+    manualCloseDay = timeinfo.tm_yday;
+  }
+
+  // Bedtime window: stop the countdown, hold both night LEDs solid,
+  // arm the alternating flash for when the bottom limit is reached.
+  if (bedtimeWarning || lightOn) {
+    bedtimeWarning = false;
+    manualBedtimeRequested = true;
+    digitalWrite(NIGHT_LED1_PIN, HIGH);
+    digitalWrite(NIGHT_LED2_PIN, HIGH);
+  }
+
+  setEvent("Manual CLOSE");
+
+  // Start the move BEFORE asserting the lock, or the gate blocks it.
+  manualOpenedDoor = false;
+  manualClosedDoor = false;
+  startClosing();
+  manualClosedDoor = true;
+
+  return true;
+}
+
+
+// ======================================================
 // WIFI
 // ======================================================
 
@@ -2936,11 +3241,17 @@ void connectWiFi() {
 
     wifiRetryCount = 0;
 
+    wifiDisabledLogged = false;
+
     setEvent("WiFi Connected");
 
-    Serial.println("WiFi Connected");
+    //Log.println("WiFi Connected");
 
-    Serial.println(WiFi.localIP());
+    Log.println(WiFi.localIP());
+
+    dashboardOnWifiConnected();
+
+    otaOnWifiConnected();
 
     syncRtcFromNtp();
   }
@@ -2955,7 +3266,11 @@ void connectWiFi() {
 
     setEvent("WiFi Lost");
 
-    Serial.println("WiFi Lost");
+    //Log.println("WiFi Lost");
+
+    dashboardOnWifiLost();
+
+    otaOnWifiLost();
   }
 
   // Already connected
@@ -2971,10 +3286,13 @@ void connectWiFi() {
   lastWiFiAttempt = millis();
 
   if (wifiRetryCount >= MAX_WIFI_RETRIES) {
-    setEvent("WiFi Disabled");
-    WiFi.mode(WIFI_OFF);  // Save power
+    if (!wifiDisabledLogged) {
+      setEvent("WiFi Disabled");
+      wifiDisabledLogged = true;
+    }
+    WiFi.mode(WIFI_OFF);  // Save power; WiFi.begin() below re-enables it on the next cycle
     wifiRetryCount = 0;
-    return;  // Don't retry this session
+    return;
   }
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -3027,7 +3345,7 @@ void syncRtcFromNtp() {
 
     rtc.adjust(DateTime((uint32_t)time(nullptr)));
 
-    Serial.println("RTC synced from NTP");
+    Log.println("RTC synced from NTP");
   }
 }
 
@@ -3193,8 +3511,58 @@ void updateSunTimes(struct tm timeinfo) {
 }
 
 // ======================================================
-// LIGHT CONTROL
+// LIGHT PWM HELPERS (XY-MOS on LIGHT_PIN)
 // ======================================================
+
+void setLightDuty(int duty) {
+  if (duty < 0) duty = 0;
+  if (duty > 255) duty = 255;
+
+  if (enableLightDimming) {
+    ledcWrite(LIGHT_PIN, duty);  // core 3.x: write by pin
+  } else {
+    digitalWrite(LIGHT_PIN, duty > 0 ? HIGH : LOW);
+  }
+}
+
+// Returns the duty (0-255) the light should be at right now, based on the
+// auto schedule. Linear or perceptual ramp over LIGHT_FADE_MINUTES ending
+// exactly at the scheduled light-OFF time.
+int computeScheduledLightDuty() {
+
+  struct tm timeinfo;
+  if (!getTime(timeinfo)) return lightOn ? LIGHT_FULL_DUTY : 0;
+
+  int seasonalLightOnOffset = getSeasonalOffset(lightOnOffsetBST, lightOnOffsetGMT, timeinfo);
+  int seasonalLightOffOffset = getSeasonalOffset(lightOffMinutesBST, lightOffMinutesGMT, timeinfo);
+
+  int onMinutes = actualSunset + seasonalLightOnOffset;
+  int offMinutes = actualSunset + seasonalLightOffOffset;
+
+  // Seconds since midnight, so the fade updates every loop pass
+  long nowSec = (long)timeinfo.tm_hour * 3600L + timeinfo.tm_min * 60L + timeinfo.tm_sec;
+  long onSec = (long)onMinutes * 60L;
+  long offSec = (long)offMinutes * 60L;
+  long fadeSec = (long)LIGHT_FADE_MINUTES * 60L;
+  long fadeStartSec = offSec - fadeSec;
+
+  if (nowSec < onSec || nowSec >= offSec) return 0;
+  if (nowSec < fadeStartSec) return LIGHT_FULL_DUTY;
+
+  float t = (float)(nowSec - fadeStartSec) / (float)fadeSec;  // 0.0 -> 1.0
+
+  int duty;
+  if (lightFadePerceptual) {
+    float shaped = powf(1.0f - t, LIGHT_FADE_GAMMA);
+    duty = LIGHT_NEAR_ZERO + (int)((LIGHT_FULL_DUTY - LIGHT_NEAR_ZERO) * shaped);
+  } else {
+    duty = LIGHT_FULL_DUTY - (int)((LIGHT_FULL_DUTY - LIGHT_NEAR_ZERO) * t);
+  }
+
+  if (duty < LIGHT_NEAR_ZERO) duty = LIGHT_NEAR_ZERO;
+  if (duty > LIGHT_FULL_DUTY) duty = LIGHT_FULL_DUTY;
+  return duty;
+}
 
 // ======================================================
 // MANUAL LIGHT HOLD (post-manual-close)
@@ -3207,12 +3575,12 @@ void updateManualLightHold() {
 
   if (manualLightOffPendingAt == 0) return;
 
-  if (millis() < manualLightOffPendingAt) return;
+  if ((long)(millis() - manualLightOffPendingAt) < 0) return;
 
   // Timer expired — turn the light off (only if still on).
   if (lightOn) {
 
-    digitalWrite(LIGHT_PIN, LOW);
+    setLightDuty(0);
 
     lightOn = false;
 
@@ -3245,7 +3613,7 @@ void updateLight(int nowMinutes) {
   if (manualLightOverride) {
 
     // Only auto-reset if manual ON timeout expired (10 minutes)
-    if (manualLightOffTime > 0 && millis() >= manualLightOffTime) {
+    if (manualLightOffTime > 0 && (long)(millis() - manualLightOffTime) >= 0) {
       manualLightOverride = false;
       manualLightOffTime = 0;
       // Resume auto control (fall through to auto logic below)
@@ -3272,7 +3640,7 @@ void updateLight(int nowMinutes) {
 
   // TURN ON
   if (!lightOn && !lightCycleComplete && nowMinutes >= onTime && nowMinutes < offTime) {
-    digitalWrite(LIGHT_PIN, HIGH);
+    setLightDuty(LIGHT_FULL_DUTY);
 
     lightOn = true;
 
@@ -3286,13 +3654,18 @@ void updateLight(int nowMinutes) {
   //if (lightOn && nowMinutes >= offTime) {
   if (lightOn && nowMinutes >= offTime && manualLightOffPendingAt == 0) {
 
-    digitalWrite(LIGHT_PIN, LOW);
+    setLightDuty(0);
 
     lightOn = false;
 
     lightCycleComplete = true;
 
     setEvent("Light OFF");
+  }
+
+  // Continuous brightness update (smooth fade) — only while auto-controlled
+  if (lightOn) {
+    setLightDuty(computeScheduledLightDuty());
   }
 
   // RESET NEXT MORNING
@@ -3371,58 +3744,23 @@ void handleSwitch() {
     // CW = CLOSE
     // Require 3 detents
     // -----------------------------------------
-
     if (!manualMoveActive && manualEncoderAccum <= -ENCODER_DETENTS) {
 
       manualEncoderAccum = 0;
 
       if (closeLimitHit()) {
-
         oledNotice("Already CLOSED");
-
         manualEncoderAccum = 0;
       } else {
-
-        manualMoveActive = true;
-
-        // A manual command supersedes any in-flight safety recovery.
-        // See the CCW/OPEN branch above for the rationale.
-        safetyState = SAFETY_IDLE;
-        safetyStartTime = 0;
-        safetyOpenReachedTime = 0;
-        obstructionRetries = 0;
-
-        struct tm timeinfo;
-        if (getTime(timeinfo)) {
-          manualCloseDay = timeinfo.tm_yday;
-        }
-
-        // Manual close during the bedtime window (light on / progressive
-        // homing countdown active): stop the countdown now, hold both night
-        // LEDs SOLID ON for the door travel, and arm the alternating night
-        // flash to begin when the bottom limit switch is reached.
-        // The coop light is left ON until the bottom limit is hit (see
-        // updateDoor() DOOR_CLOSING completion).
-        if (bedtimeWarning || lightOn) {
-          bedtimeWarning = false;
-          manualBedtimeRequested = true;
-          digitalWrite(NIGHT_LED1_PIN, HIGH);
-          digitalWrite(NIGHT_LED2_PIN, HIGH);
-        }
-
-        setEvent("Manual CLOSE");
-
-        // Start the move BEFORE asserting the lock, or the gate in startClosing() blocks it.
-        manualOpenedDoor = false;
-        manualClosedDoor = false;
-        startClosing();
-        manualClosedDoor = true;
+        manualCloseRequested();
       }
     }
 
     lastEncoderValue = value;
-  }
-}
+  }  // closes if (rotaryEncoder.encoderChanged() && currentPage == PAGE_MANUAL)
+}  // closes handleSwitch()
+
+
 // ======================================================
 // UPDATE DOOR
 // ======================================================
@@ -3466,6 +3804,7 @@ void updateDoor() {
           nightMode = false;
 
           bedtimeWarning = false;
+          nightFlashAfterReboot = false;
 
           digitalWrite(NIGHT_LED1_PIN, LOW);
           digitalWrite(NIGHT_LED2_PIN, LOW);
@@ -3509,10 +3848,11 @@ void updateDoor() {
 
         // Scheduled bedtime close OR manual close during the bedtime window:
         // begin the alternating night flash now that the bottom limit is hit.
-        if (bedtimeWarning || manualBedtimeRequested) {
+        if (bedtimeWarning || manualBedtimeRequested || nightFlashAfterReboot) {
 
           nightMode = true;
         }
+        nightFlashAfterReboot = false;
 
         // A manual bedtime close schedules the coop light to turn off
         // MANUAL_LIGHT_HOLD_MS after the bottom limit is reached, rather
@@ -3704,7 +4044,16 @@ void showWelcomeScreen() {
 
 void setup() {
 
+  // Motor outputs LOW before anything else (OLED/NVS/welcome screen come later)
+  pinMode(MOTOR_OPEN_PIN, OUTPUT);
+  pinMode(MOTOR_CLOSE_PIN, OUTPUT);
+  digitalWrite(MOTOR_OPEN_PIN, LOW);
+  digitalWrite(MOTOR_CLOSE_PIN, LOW);
+
   Serial.begin(115200);
+
+  Serial.begin(115200);
+
 
 
   // ======================================================
@@ -3717,17 +4066,25 @@ void setup() {
     .trigger_panic = true
   };
 
-  //esp_task_wdt_init(&wdt_config);
   esp_err_t wdtErr = esp_task_wdt_init(&wdt_config);
+
+  // Reconfigure if already initialised
   if (wdtErr == ESP_ERR_INVALID_STATE) {
     wdtErr = esp_task_wdt_reconfigure(&wdt_config);
   }
-  esp_task_wdt_add(NULL);
+
+  // Stop startup if watchdog configuration fails
+  ESP_ERROR_CHECK(wdtErr);
+
+  // Register the current task with the watchdog
+  ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+
 
 
   esp_reset_reason_t resetReason = esp_reset_reason();
   uint8_t prevStage = loopStage;  // read BEFORE overwriting
   loopStage = 90;                 // 90 = in setup()
+  logBoot((int)resetReason, prevStage);
 
   Wire.begin();           //primary I2C bus (Display,RTC & SHT3x sensors)
   Wire.setClock(100000);  // reduce I2C clock speed
@@ -3737,19 +4094,7 @@ void setup() {
   sht3xInside.begin(Wire, INSIDE_SHT_ADDRESS);
 
   //setEvent("SHT31 Initialised"); // commented out to reduce Event logging
-  Serial.println("SHT31 initialised at address 0x45");
-
-  // ======================================================
-  // REMOVE OBSOLETE LEGACY HISTORY KEY
-  // ======================================================
-  //preferences.begin("envlog", false);
-
-  //if (preferences.isKey("history")) {
-  //  preferences.remove("history");
-  // Serial.println("Removed obsolete legacy history key");
-  //}
-
-  //preferences.end();
+  Log.println("SHT31 initialised at address 0x45");
 
   // ======================================================
   // LOAD INSIDE HISTORY
@@ -3760,9 +4105,9 @@ void setup() {
 
   if (lenIn == sizeof(climateLog)) {
     preferences.getBytes("history_in", climateLog, sizeof(climateLog));
-    Serial.println("Loaded history_in");
+    Log.println("Loaded history_in");
   } else {
-    Serial.println("No inside history found");
+    Log.println("No inside history found");
   }
 
   preferences.end();
@@ -3804,9 +4149,9 @@ void setup() {
 
   if (lenOut == sizeof(climateLogOutside)) {
     preferences.getBytes("history_out", climateLogOutside, sizeof(climateLogOutside));
-    Serial.println("Loaded outside history");
+    Log.println("Loaded outside history");
   } else {
-    Serial.println("No outside history found");
+    Log.println("No outside history found");
   }
 
   // ======================================================
@@ -3841,7 +4186,7 @@ void setup() {
     sht3xOutside.begin(Wire, OUTSIDE_SHT_ADDRESS);
 
     //setEvent("SHT30 Initialised"); // commented out to reduce event logging
-    Serial.println("SHT30 OUT initialised at address 0x44");
+    Log.println("SHT30 OUT initialised at address 0x44");
   }
 
   // After outside sensor initialised, set LED initial state
@@ -3868,7 +4213,7 @@ void setup() {
     if (rtc.lostPower()) {
 
       setEvent("RTC Battery Low");
-      Serial.println("RTC LOST POWER");
+      Log.println("RTC LOST POWER");
     }
 
     DateTime now = rtc.now();
@@ -3877,17 +4222,17 @@ void setup() {
 
       rtcAvailable = false;
 
-      Serial.println("RTC INVALID");
+      Log.println("RTC INVALID");
     } else {
 
-      Serial.println("RTC OK");
+      Log.println("RTC OK");
     }
 
   } else {
 
     rtcAvailable = false;
 
-    Serial.println("RTC NOT FOUND");
+    Log.println("RTC NOT FOUND");
   }
 
   if (resetReason == ESP_RST_POWERON) {
@@ -3926,6 +4271,8 @@ void setup() {
   closeStableState = lastCloseReading;
 
   pinMode(LIGHT_PIN, OUTPUT);
+  ledcAttach(LIGHT_PIN, PWM_FREQ_HZ, PWM_RES_BITS);  // core 3.x PWM
+  ledcWrite(LIGHT_PIN, 0);                           // start off
 
   pinMode(BUZZER_PIN, OUTPUT);
 
@@ -3965,6 +4312,10 @@ void setup() {
 
   stopMotor();
 
+  // Network name shown on your router (letters, numbers and hyphens only, no spaces or underscores)
+  const char wifiHostname[] = "Hen_House_V3";
+  WiFi.setHostname(wifiHostname);
+
   WiFi.mode(WIFI_STA);
 
   // Disable WiFi power saving
@@ -3977,6 +4328,10 @@ void setup() {
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  dashboardSetup();
+
+  otaSetup();
 
   setupTime();
 
@@ -4151,6 +4506,8 @@ void handleEventScroll() {
       openRetryCount = 0;
       closeRetryCount = 0;
       clearFaultState();
+      timeAlarm = false;
+      if (timeLostSince != 0) timeLostSince = millis();  // re-alarm after another TIME_LOST_ALARM_MS
       setEvent("RESET OK");
       delay(750);
       displayDirty = true;
@@ -4181,6 +4538,8 @@ void handleEventScroll() {
       openRetryCount = 0;
       closeRetryCount = 0;
       clearFaultState();
+      timeAlarm = false;
+      if (timeLostSince != 0) timeLostSince = millis();  // re-alarm after another TIME_LOST_ALARM_MS
       setEvent("RESET OK");
       delay(750);
       displayDirty = true;
@@ -4240,14 +4599,14 @@ void handleEventScroll() {
       if (lightOn) {
         // Light is ON, turn it OFF (permanently)
         lightOn = false;
-        digitalWrite(LIGHT_PIN, LOW);
+        setLightDuty(0);
         manualLightOverride = true;  // Lock out auto control
         manualLightOffTime = 0;      // No timeout - stays off permanently
         setEvent("Manual Light OFF");
       } else {
         // Light is OFF, turn it ON (for 10 minutes)
         lightOn = true;
-        digitalWrite(LIGHT_PIN, HIGH);
+        setLightDuty(LIGHT_FULL_DUTY);
         manualLightOverride = true;
         manualLightOffTime = millis() + manualLightTimeout;  // Auto-off after 10 min
         setEvent("Manual Light ON");
@@ -4388,6 +4747,24 @@ void updateNightLeds() {
 }
 
 // ======================================================
+// DASHBOARD HOOKS
+// ======================================================
+
+bool dashboardCloseAllowed() {
+  return bedtimeWarning
+         && doorState != DOOR_CLOSED
+         && doorState != DOOR_CLOSING
+         && safetyState == SAFETY_IDLE
+         && !systemLockout
+         && faultState == FAULT_NONE;
+}
+
+bool dashboardRequestClose() {
+  if (!dashboardCloseAllowed()) return false;
+  return manualCloseRequested();
+}
+
+// ======================================================
 // LOOP
 // ======================================================
 
@@ -4399,10 +4776,10 @@ void loop() {
   delay(10);
 
   loopStage = 1;
-  updateEnvironment();
+  rolloverEnvironmentLog();
 
   loopStage = 2;
-  rolloverEnvironmentLog();
+  updateEnvironment();
 
   loopStage = 3;
   updateOutsideEnvironment();
@@ -4437,6 +4814,12 @@ void loop() {
   loopStage = 13;
   connectWiFi();
 
+  loopStage = 16;  // 16 = dashboard
+  dashboardLoop();
+
+  loopStage = 17;  // 17 = OTA
+  otaLoop();
+
   loopStage = 14;
   refreshDisplayIfNeeded();
 
@@ -4446,7 +4829,7 @@ void loop() {
   // MANUAL LIGHT AUTO OFF
   // ==========================================
 
-  if (manualLightOverride && manualLightOffTime > 0 && millis() >= manualLightOffTime) {
+  if (manualLightOverride && manualLightOffTime > 0 && (long)(millis() - manualLightOffTime) >= 0) {
 
     manualLightOverride = false;
 
@@ -4454,7 +4837,7 @@ void loop() {
 
     lightOn = false;
 
-    digitalWrite(LIGHT_PIN, LOW);
+    setLightDuty(0);
 
     setEvent("Light Timeout");
   }
@@ -4481,9 +4864,24 @@ void loop() {
         setEvent("Time failed");
         timeFailLogged = true;
       }
+      if (timeLostSince == 0) timeLostSince = millis();
+      if (!timeAlarm && millis() - timeLostSince > TIME_LOST_ALARM_MS) {
+        timeAlarm = true;
+        if (!timeAlarmLogged) {
+          char buf[40];
+          if (lastGoodTime[0]) snprintf(buf, sizeof(buf), "No time since %s", lastGoodTime);
+          else snprintf(buf, sizeof(buf), "No valid time");
+          setEvent(buf);
+          timeAlarmLogged = true;
+        }
+      }
       return;
     }
     timeFailLogged = false;
+    timeLostSince = 0;
+    timeAlarm = false;
+    timeAlarmLogged = false;
+    snprintf(lastGoodTime, sizeof(lastGoodTime), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
 
     updateSunTimes(timeinfo);
 
@@ -4492,7 +4890,7 @@ void loop() {
     if (timeinfo.tm_mday != lastSavedDay) {
       lastSavedDay = timeinfo.tm_mday;
       persistEnvironmentHistoriesToPrefs();
-      Serial.println("Daily history backup saved (in + out)");
+      Log.println("Daily history backup saved (in + out)");
     }
 
     int nowMinutes = (timeinfo.tm_hour * 60) + timeinfo.tm_min;
@@ -4531,10 +4929,25 @@ void loop() {
 
     updateLight(nowMinutes);
 
+    // One-shot after boot (nightMode is RAM only, lost on power cut/reset):
+    // door closed at night -> restore night flash now.
+    // door not closed at night -> flash starts when the catch-up close reaches the bottom limit.
+    static bool nightFlashRestoreDone = false;
+    if (!nightFlashRestoreDone) {
+      nightFlashRestoreDone = true;
+      if (!manualBedtimeRequested && (nowMinutes >= closeTime || nowMinutes < openTime)) {
+        if (doorState == DOOR_CLOSED && closeLimitHit()) {
+          nightMode = true;
+        } else {
+          nightFlashAfterReboot = true;
+        }
+      }
+    }
+
     if (autoState == AUTO_ALLOWED) {
 
       // ---------- AUTO OPEN: one-time morning check at scheduled openTime ----------
-      if (doorState == DOOR_CLOSED) {
+      if (doorState == DOOR_CLOSED || doorState == DOOR_UNKNOWN) {
 
         // We already have timeinfo above
         int today = timeinfo.tm_yday;
@@ -4556,7 +4969,7 @@ void loop() {
 
             bool applyDelay = false;
 
-            if (enableOutsideSHT && !forceOpenDespiteCold && !isnan(currentTempOutside)) {
+            if (enableOutsideSHT && !forceOpenDespiteCold && outsideTempValid()) {
               if (currentTempOutside < outsideTempTriggerC) applyDelay = true;
             }
 
@@ -4582,7 +4995,7 @@ void loop() {
           if (delayedOpenTime >= 0) {
 
             // Allow cancellation of the previously-applied delay if temp warms before delayed time
-            if (enableOutsideSHT && !forceOpenDespiteCold && !isnan(currentTempOutside) && currentTempOutside >= outsideTempTriggerC) {
+            if (enableOutsideSHT && !forceOpenDespiteCold && outsideTempValid() && currentTempOutside >= outsideTempTriggerC) {
               // Cancel the delay silently (no event)
               delayedOpenTime = -1;
               coldDelayDay = -1;
