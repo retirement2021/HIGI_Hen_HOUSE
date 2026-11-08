@@ -1,5 +1,5 @@
 [README_Version3.md](https://github.com/user-attachments/files/34425629/README_Version3.md)
-# HIGI Hen House — V3.6
+# HIGI Hen House — V3.x
 
 An ESP32-based automatic coop controller for managing the door, lighting and environmental monitoring. It is designed for unattended operation, with manual controls and safety checks for the door mechanism.
 
