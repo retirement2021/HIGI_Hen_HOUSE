@@ -8,3 +8,6 @@ Set your wifi Credentials and location of the Chicken coop
 // Location of Hen House, for sunrise & sunset times.
 double latitude = 50.0000;
 double longitude = -3.0000;
+
+OTA passwords: Hen House:- higihenhouse
+                Coop Cam:- higicoopcam
