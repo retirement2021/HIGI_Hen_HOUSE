@@ -1,4 +1,4 @@
-# HIGI Hen House — V3.6
+# HIGI Hen House — V3.0x
 
 An ESP32-based automatic coop controller for managing the door, lighting and environmental monitoring. It is designed for unattended operation, with manual controls and safety checks for the door mechanism.
 
@@ -38,3 +38,5 @@ Keep all sketch tabs and headers together in the Arduino sketch folder:
 The dashboard uses plain HTTP and has **no login**. Anyone who can access the device on your local network may view the dashboard and may be able to request a door close while the board allows it. Use it only on a trusted LAN; do not expose it directly to the internet. you will find the IP address on the "system WiFi" page of the control box. just type the IP address into your web browser.
 
 The browser is not the safety authority: the ESP32 checks the close conditions again before acting. The physical installation still needs suitable limit switches, correctly wired motor control, and safe mechanical travel.
+
+I have added a Higi Coop Cam to the repo, the dashboard works the same as the hen house dashboard. same size, same colours 

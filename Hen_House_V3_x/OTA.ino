@@ -72,10 +72,3 @@ void otaLoop() {  // once per loop()
   ArduinoOTA.handle();
 }
 
-// void otaLoop() {                        // once per loop()
-//   if (!otaRunning) return;
-//   bool moving = (doorState == DOOR_OPENING || doorState == DOOR_CLOSING);
-//   if (millis() < 90000UL) moving = true;   // TEST ONLY: pretend the door is moving for 90 s after boot. DELETE FOR THE COOP.
-//   if (moving) return;                   // refuse while moving
-//   ArduinoOTA.handle();
-// }

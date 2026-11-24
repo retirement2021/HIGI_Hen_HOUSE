@@ -1,176 +1,47 @@
 // System: ESP32S3 N16R8 board.
-// Arduino IDE: ESP32S3 Dev Module
+// Arduino IDE: ESP32S3 Dev Module, esp32:esp32 3.3.12. Full Tools list and FQBN: CHANGELOG.md, "Build settings".
 
 // Author HIGI-Styx
-// Febuary-October 2026
+// Febuary-November 2026
 
 
 //  https://github.com/retirement2021/HIGI_Hen_HOUSE for Robust versions, wiring diagrams, photos, 3D printing files, and a complete parts list.
 
 
-// V3.6
-// Added trend arrows to the inside and outside temperature cards, using the same method as the humidity arrows.
-// The arrow compares the newest sensor reading with the oldest of the last 7 readings. A change of 0.5C or more shows up/down, otherwise steady.
-// The arrow is blank until 3 readings have been taken after a reboot, and is cleared by a failed sensor read.
-// Both temperature cards now use the same thermometer icon. The bulb and stem take the card's temperature band colour, so they change colour as the temperature rises and falls.
-// The Timezone card on the dashboard is replaced by a Cold Delay card. It has a blue border, and the pill shows the cold delay setpoint (outsideTempTriggerC).
-// The pill turns blue when the blue cold LED condition is true or a cold door delay is pending, amber OVERRIDE when forceOpenDespiteCold is on, and grey OFF when the outside sensor is disabled.
-// The GMT/BST value is no longer sent to the dashboard.
-
-// V3.5
-// Added gradual PWM dimming to the coop light. The light now fades smoothly to near-zero over the last 2 minutes of its scheduled ON window, instead of cutting off abruptly.
-// The coop light on LIGHT_PIN (GPIO 17) is now driven by PWM through an XY-MOS MOSFET trigger module, replacing the simple relay on/off.
-// The fade is derived from the existing scheduled light-OFF time, so changing lightOnOffsetBST/GMT or lightOffMinutesBST/GMT automatically moves the fade with it.
-// Two fade curves are selectable in USER SETTINGS: linear, or perceptual (gamma-corrected), which holds brightness longer and eases off gently like a real sunset.
-// Fade duration, near-zero floor and gamma are all adjustable in the USER SETTINGS block, alongside the light offsets.
-// All light control now goes through a single setLightDuty() helper, so manual overrides and the auto schedule share the same brightness path.
-// setLightDuty() falls back to plain on/off if enableLightDimming is set false, preserving the old behaviour.
-// Migrated to the ESP32 Arduino core 3.x LEDC API (ledcAttach / ledcWrite by pin), replacing the removed ledcSetup / ledcAttachPin functions.
-
-// V3.04
-// Log lines are now stamped with the clock time as [HH:MM:SS] instead of uptime. The time is local (GMT/BST) and comes from the same system clock as getTime().
-// Lines logged before the clock is valid (early in setup, until NTP or the RTC seeds it) show [--:--:--]. Uptime is still shown on the dashboard.
-// The stamp is only added to the log buffer shown on the dashboard, the USB serial monitor output is unchanged.
-
-// V3.4
-// The dashboard can now close the coop door, during the bedtime window only. This is the first dashboard control. Everything else on the dashboard is still read-only.
-// The door pill turns gold and glows when closing is allowed. Tap it to close the door. When it is not gold, tapping does nothing.
-// Closing is allowed only while the bedtime warning is active (the coop light has come on and the door has not yet closed)
-// The page only sends the request. The board checks every condition again before moving the door and refuses (HTTP 409) if any has changed since the page last updated.
-// A dashboard close uses the same manual close routine as the manual button. It logs "Manual CLOSE", stops the bedtime countdown,then starts the alternating night flash at the bottom limit.
-// The coop light stays on for MANUAL_LIGHT_HOLD_MS after a dashboard close, then switches off.
-// Added a trend arrow to the inside and outside humidity cards: up, steady or down.
-// The board samples the humidity each time a sensor reading is taken (every 13 minutes inside, 9 minutes outside) and keeps the last 7. 
-// A change of 1.0 %RH or more across the window shows up or down, anything smaller shows steady. HUM_TREND_DEADBAND in Dashboard.ino sets the 1.0.
-// A failed or missing reading clears that sensor's history, so an old arrow cannot stay on screen. History is held in RAM and restarts after a reboot.
-// The trend is calculated on the board, so it survives page reloads and is the same on every device.
-
-// V3.3
-// Added a remote log. Everything printed with Log.print / Log.println / Log.printf,  it is still sent to Serial, so the USB serial monitor works as before.
-// Each log line is stamped with uptime as h:mm:ss. The log is emptied by a restart.
-// All Serial.print calls in the main sketch, Dashboard.ino and OTA.ino are now Log.print. Serial.begin is unchanged.
-// A "Coop Log" tile. Tapping it opens a collapsible log card. Clear only clears the screen, the board keeps its buffer.
-// The log page only requests data while the card is open. The data comes from /api/log and the dashboard has no separate log page.
-// The log shows "device restarted" after a reboot and "some lines were missed" if the page falls too far behind the buffer.
-// The log is paused with the rest of the dashboard while the door is moving, and catches up afterwards.
-// Added a boot line at startup: BOOT <version> reset=<reason> prevLoopStage=<n>. The reason is one of POWERON, EXT, SW, PANIC, INT_WDT, TASK_WDT, WDT, DEEPSLEEP, BROWNOUT or OTHER.
-// Added a colour change to the temperature cards to reflect the current temperatures
-
-// V3.2
-// Rearranged the cards on the dashboard.
-// Added today's minimum and maximum temperature to the inside and outside temperature cards.
-// Added an outside humidity card.
-
-// V3.1
-// Redesigned the dashboard, which looked blocky and unprofessional, to give it a cleaner, more professional look.
-// Added a temperature Difference card (inside minus outside temperature) and a Timezone card (GMT or BST).
-
-// V3.0
-// Added a read-only web dashboard, viewable on a PC or phone on the home network. The address is printed to Serial as "Dashboard: http://<ip>" each time WiFi connects.
-// Dashboard shows inside and outside temperature with today's min and max, the difference between them, inside humidity, door position, coop light, DAY/NIGHT mode, today's door and light times, RTC status, WiFi signal and uptime.
-// Dashboard header shows the firmware version taken from systemVersion, so it follows the version number automatically.
-// Dashboard code lives in its own tab (Dashboard.ino). The main sketch only calls dashboardSetup(), dashboardOnWifiConnected(), dashboardOnWifiLost() and dashboardLoop() (loopStage 16).
-// The web server stops when WiFi is lost and restarts when it reconnects. The existing WiFi retry and NTP logic is unchanged.
-// The web server is paused while the door is moving, so a stalled browser connection cannot delay the limit switch checks. The page holds its last values briefly and shows Offline until the door stops.
-// A failed or missing reading is shown as "--" on the dashboard instead of breaking the page, and the outside temperature is hidden once its reading is older than OUTSIDE_TEMP_STALE_MS.
-// A door fault or system lockout shows as a red FAULT on the dashboard.
-// Dashboard uptime uses the ESP32 hardware timer, so it does not reset at the 49.7 day millis() rollover.
-// Set the WiFi hostname to HenHouse-V3 so the board shows a name on the router.
-// Partition scheme changed to a 16MB layout with two 3MB app slots (room for future OTA updates). "Erase All Flash Before Sketch Upload" is now Disabled so the NVS history survives a USB upload.
-
-// V2.22
-// Environmental history rollover now saves the active calendar date in NVS, preventing loss of daily date tracking after a restart or power interruption.
-// Daily history is archived using the saved calendar date rather than subtracting 24 hours, avoiding incorrect dates during BST/GMT clock changes.
-// Rollover now runs before environmental sensor updates, ensuring the first readings of a new day are recorded against the correct daily statistics.
-// Added protection against environmental history rollover when the system clock moves backwards.
-
-// V2.21
-// Motor outputs are now set LOW as the first lines of setup(), before the OLED, NVS and welcome screen, so the motor pins never float during boot or after a watchdog reset.
-// Clearing a fault now re-derives the door state from the limit switches. If the door was stopped mid-travel, the morning auto-open check is re-armed.
-// Outside temperature is now only trusted for 3 hours after the last valid reading. A failed or disconnected SHT30 no longer holds a stale cold value that would delay the door or keep the Cold LED on.
-// A "WiFi Disabled" is now logged once per outage instead of every 30 minutes, to stop a long WiFi outage filling the event log.
-// Fixed millis() rollover (49.7 days uptime) in the manual light timeout, post-manual-close light hold and display notice timers, which could expire instantly if set just before rollover.
-// Added a no-valid-time alarm: if neither NTP nor the RTC provides a time for 1 hour, the red LED flashes slowly and the buzzer sounds, and "No time since HH:MM" is logged once. Door control is not blocked.
-
-// V2.20
-// Manual bedtime close: stops the homing LED sequence, holds both night LEDs solid ON, then starts the alternating night flash when the bottom limit is reached.
-// Coop light now stays on for MANUAL_LIGHT_HOLD_MS __ minutes after a manual bedtime close, then switches off.
-// A manual close now cancels any in-flight safety recovery and resets the obstruction retry counter.
-// Added a manual-lock gate to startOpening()/startClosing() and a re-entry guard that stops an in-flight move before a manual command, preventing spurious Close Obstruction.
-// Obstruction reopen no longer clears the bedtime indicators when a manual bedtime close is pending.
-
-// V2.19
-// Added catch-up door closing: if the door is not closed after the close time, it now closes on the next once-a-minute check (power cut, reset or fault cleared after dusk).
-// Fixed the Manual page rotary encoder using stale position data after leaving and re-entering the page, which could trigger a door move on a single click.
-// Watchdog now falls back to esp_task_wdt_reconfigure() when the core has already initialised it, so the 35 second timeout and panic reset apply.
-// A "Time failed" is now logged once per outage instead of every minute, to stop it filling the event log.
-// Door Obstruction retry counter is now reset when a fault is cleared, so the next obstruction gets its full release retries.
-
-//V2.18
-// Added a page change debounce / minimum press filter (30 ms) as some pages could be missed when scrolling between pages.
-// Updated the the 5+ second encoder fault clear logic, once 5 seconds have passed it will reset while holding the button in as opposed to resetting on release.
-
-// V2.17
-// DST transition validation: confirms the system will change automatically to BST/GMT at the correct seasonal timing signal.
-// The sketch now runs on local time with a DST-aware timezone rule, so door and lighting schedules adjust correctly across BST/GMT changeover.
-// Added a GMT/BST flag to the title of Today's schedule page.
-
-// V2.16
-// Fix timestamp positioning shift caused by single-digit temperature values on Today's Internal and External display pages.
-
-// V2.15
-// One month soak test in working coop.
-// Modified the NVS data structure to minimize save writes and reducing the target storage duration for long-term stability.
-
-// V2.14
-// Standardised NVS logging implementation to resolve saving errors on specific pages.
-
-// V2.13
-// Remove the current time and 1 second refresh on System Time page and replace with Cold threshhold temp.
-// Change the title of that page to Cold & Daytime.
-
-// V2.12
-// Amalgamated inside and outside environmental pages into one, for convenient viewing.
-
-// V2.10
-// removed the clear persistent environment logs on the next upload as it seemed the culprit to NVS logging fails.
-
-// 2.04
-// Rewrote the Environment Outside pages inline with the Environment Inside pages for consistency.
-// Futher refinement to the cold delay logic to poll the external temperature sensor immediately before the door opens, then reset the polling timer.
-
-// V2.02
-// Refined cold delay logic to evaluate temperature immediately prior to door opening, logging a "Cold Delay" event when triggered.
-// Added a option to clear internal and external persistent environment logs on the next upload.
-
-// V2.01
-// Added support for an SHT30 outdoor temperature probe at address 0x44, complete with dedicated display pages and logging.
-// Replaced the Adafruit_SHT31 library with SensirionI2CSHT3x to support dual SHT3x sensors on separate I2C addresses.
-// Updated the I2C address for the SHT31 coop sensor to 0x45.
-// Implemented a cold weather morning door delay when outdoor temperatures fall below a configurable threshold.
-// Added a 24/7 Cold (blue) LED indicator that illuminates when ambient temperature drops below the configured setpoint.
-
-// V2.0
-// Changed from a DHT22 coop temp sensor to a SHT31 sensor.
-
-
-//------------------------
-
 // This project has evolved to enable long-term autonomous operation with minimal user intervention.
 
-// An automated coop management system that synchronizes door operation and lighting with natural sunrise/sunset times,
+// An automated coop management system that synchronizes a guillotine style door operation and lighting with natural sunrise/sunset times,
 // Continuously tracks environmental metrics, and integrates robust safety protocols to protect the flock and hardware.
 
+// Field-proven: this sketch has been tested on a daily basis on a working coop, running continuously through
+// real door cycles, lighting schedules and changing weather.
+
 // Tailored for UK time zones and DST shifts.
-// Only requires a minimal Wi-Fi signal to perform NTP time synchronization.
-// All customizable settings are centralized in one block under two headers: *USER SETTINGS* and *USER MAGIC NUMBERS*.
+// Wi-Fi is optional: the system runs autonomously without it, and NTP time sync needs only a weak signal.
+// The dashboard and OTA updates need a stronger, steady signal; the notes below say what each one needs.
+
+// All customizable settings are centralized in one block under two headers of the Hen_House V3.xx.ino: *USER SETTINGS* and *USER MAGIC NUMBERS*.
 // Integrated motor timeout protection to prevent motor burnout during mechanical door failures.
 // Obstruction Protection: Smart door-reversal logic to release a trapped chicken during closure.
 // Coop door and light operations sync with local sunrise/sunset times and feature fully customizable settings to accommodate your flock's routine.
+// Coop light dimming: the coop light is driven by PWM through an XY-MOS module with soft ON and fades smoothly over the final
+// few minutes of its ON period instead of switching off abruptly. The fade is perceptual (gamma-corrected) to the eye,
+// and the same fade follows a manual bedtime close.
 // Rooster Crow Control: Optional fixed-time door opening schedule to help delay early morning crowing.
 // System operation uses a rotary encoder. Perform a long press (≥5 seconds) to clear system faults.
 
+// Built-in Wi-Fi dashboard: open the coop's address in any phone or PC browser to see live conditions at a glance.
+// Shows inside and outside temperature and humidity with today's min/max, door position, lighting state,
+// today's door and light schedule, RTC health, Wi-Fi signal strength, uptime and the running firmware version.
+// The dashboard needs a usable signal; on a weak link the page can load slowly or miss refreshes.
+// Coop Log: the same timestamped event log shown on the serial monitor streams live to the dashboard, with a Pause button.
+// The dashboard is read-only, with one exception: the door can be closed early from the dashboard during the evening closing window.
+// The door button turns gold whenever a manual close is currently allowed.
 
+// OTA firmware updates: new firmware can be installed over Wi-Fi, password protected, with progress reported in the Coop Log.
+// OTA needs the strongest and steadiest signal, because the whole image is transferred in one session. A dropped transfer
+// aborts safely and the board keeps running the current firmware.
+// OTA updates are refused while the door is moving, so a door cycle can never be interrupted.
 
 //======================================================
 // LIBRARYS
@@ -206,7 +77,7 @@ const unsigned long HOUR = 3600000UL;
 //  SYSTEM
 //--------------------------------------
 // Displayed firmware version
-const char systemVersion[] = "V3.6";
+const char systemVersion[] = "V3.64";
 
 //"""""""""""
 // WINTER
@@ -239,7 +110,7 @@ int sunriseOpenOffsetGMT = +20;  // __ minutes after sunrise
 
 //EVENING
 // Door closing offset from sunset - GMT
-int sunsetCloseOffsetGMT = +10;  // __ minutes after sunset
+int sunsetCloseOffsetGMT = +15;  // __ minutes after sunset
 
 //--------------------------------------
 //  LIGHT GMT TIME. (winter)
@@ -261,13 +132,10 @@ int lightOffMinutesGMT = +8;  // __ minutes after sunset
 
 bool enableOutsideSHT = true;  // Set to "false" if no outdoor temperature sensor is installed.
 
-float outsideTempTriggerC = -2;        // Delays scheduled door opening when outside temp is under ___ °C (also triggers 24/7 Cold LED).
+float outsideTempTriggerC = -1;        // Delays scheduled door opening when outside temp is under ___ °C (also triggers 24/7 Cold LED).
 int doorOpenDelayIfColdMinutes = +35;  // Minutes to delay door opening time.
 
 bool forceOpenDespiteCold = false;  // set true to ignore door cold-delay (persistent)
-
-// Outside reading older than this is ignored (dead/disconnected probe).
-const unsigned long OUTSIDE_TEMP_STALE_MS = 3 * HOUR;  // Cold delay and Cold LED then act as if no reading exists. Default 3 hours
 
 //""""""""""""
 // SUMMER
@@ -317,41 +185,6 @@ int lightOnOffsetBST = -7;
 int lightOffMinutesBST = +13;
 
 //--------------------------------------
-// COOP LIGHT PWM DIMMING (XY-MOS on LIGHT_PIN, GPIO 17)
-//--------------------------------------
-// The coop light is driven by PWM through a MOSFET trigger module (XY-MOS).
-// Full brightness = LIGHT_FULL_DUTY, off = 0.
-// The fade is derived from the scheduled LIGHT-OFF time (sunset path) or
-// from the end of MANUAL_LIGHT_HOLD_MS (manual door-close path), so changing
-// lightOffMinutesBST/GMT moves the sunset fade with it automatically.
-
-bool  enableLightDimming  = true;   // false = old on/off behaviour (digitalWrite)
-const int PWM_FREQ_HZ     = 5000;   // 5 kHz — above audible, fine for XY-MOS (0-20 kHz)
-const int PWM_RES_BITS    = 8;      // 8-bit: 0-255
-
-const int LIGHT_FULL_DUTY    = 255; // full brightness duty
-const int LIGHT_NEAR_ZERO    = 3;   // "near zero" duty at end of fade (0-255)
-
-// Fade duration, used by BOTH the sunset fade and the manual door-close hold.***
-const int LIGHT_FADE_MINUTES = 2;   // fade duration (minutes) ***
-
-// Manual door-close hold: the coop light stays on for this long after a
-// manual bedtime close, then fades over its last LIGHT_FADE_MINUTES. ***
-// Set this to (LIGHT_FADE_MINUTES + full-brightness minutes). ***
-const unsigned long MANUAL_LIGHT_HOLD_MS = 3 * MINUTE;
-
-// Fade curve:
-//   false = LINEAR     (duty falls in a straight line)
-//   true  = PERCEPTUAL (gamma-corrected; holds brightness, eases off gently)
-bool  lightFadePerceptual = true;
-const float LIGHT_FADE_GAMMA = 2.2f;
-
-
-// Manual door-close hold: the coop light stays on for MANUAL_LIGHT_HOLD_MS
-// after a manual bedtime close, then fades over its last LIGHT_FADE_MINUTES
-// (same curve as the sunset fade) before switching off.
-
-//--------------------------------------
 // Coop Door LED indications
 //--------------------------------------
 // Visual Chicken Homing
@@ -378,8 +211,39 @@ const unsigned long NIGHT_FLASH_MS = 1200;  //  Flashes continuously overnight u
 //======================================
 // Manual coop light auto OFF timer.
 //--------------------------------------
+//  Manual coop light switching is a abrupt OFF
 unsigned long manualLightTimeout = 10 * MINUTE;  // default 10 minutes
 
+//--------------------------------------
+// COOP LIGHT PWM DIMMING (XY-MOS on LIGHT_PIN, GPIO 17)
+//--------------------------------------
+// The coop light is driven by PWM through a MOSFET trigger module (XY-MOS).
+// Full brightness = LIGHT_FULL_DUTY, off = 0.
+// The fade is derived from the scheduled LIGHT-OFF time (sunset path) or
+// from the end of MANUAL_LIGHT_HOLD_MS (manual door-close path), so changing
+// lightOffMinutesBST/GMT moves the sunset fade with it automatically.
+
+bool enableLightDimming = true;  // false = old on/off behaviour (digitalWrite)
+const int PWM_FREQ_HZ = 5000;    // 5 kHz — above audible, fine for XY-MOS (0-20 kHz)
+const int PWM_RES_BITS = 8;      // 8-bit: 0-255
+
+const int LIGHT_FULL_DUTY = 255;  // full brightness duty
+const int LIGHT_NEAR_ZERO = 3;    // "near zero" duty at end of fade (0-255)
+
+// Fade duration, used by BOTH the sunset fade and the manual door-close hold.
+// fade duration (minutes) ***
+const int LIGHT_FADE_MINUTES = 3; //*** 
+
+// Manual door-close hold: the coop light stays on for this long after a
+// manual bedtime close, then fades over its last LIGHT_FADE_MINUTES. 
+// Set this to (LIGHT_FADE_MINUTES + full-brightness minutes). 
+const unsigned long MANUAL_LIGHT_HOLD_MS = 4 * MINUTE; // ***
+
+// Fade curve:
+//   false = LINEAR     (duty falls in a straight line)
+//   true  = PERCEPTUAL (gamma-corrected; holds brightness, eases off gently)
+bool lightFadePerceptual = true;
+const float LIGHT_FADE_GAMMA = 2.2f;
 
 //******************************************************
 //*******USER MAGIC NUMBERS*******
@@ -391,13 +255,13 @@ unsigned long manualLightTimeout = 10 * MINUTE;  // default 10 minutes
 
 // Normal door open/close timing
 #define MOTOR_TIMEOUT (16 * SECOND)  // Motor timeout protection, protects the motor from burn out if the door fails in any way.
-//                                      Adjust for how long the door motor runs between the lower & upper door limit switches (from fully closed to fully open position) \
+//                                      Adjust for how long the door motor runs between the lower & upper door limit switches (from fully closed to fully open position)
 //                                      Check Event page, eg "DOOR OPEN 14.1s", add 1-2 seconds. Keep this tight.
 
 // Automatic door obstruction timing. Chicken release logic
-#define MOTOR_TIMEOUT_RECOVERY (19 * SECOND)  // Only triggered when a door obstruction is detected (chicken blocking the door way).Time difference between MOTOR_TIMEOUT and MOTOR_TIMEOUT_RECOVERY. eg additional 3 seconds. \
-//                                               Allows for the "MOTOR_TIMEOUT" time to finish (full 15 seconds) plus a few seconds for the extra cord to unwind and rewind, eliminating a MOTOR_TIMEOUT fault. \
-//                                               Once triggered, check Event page, find the sequence, eg "Close Obstruction", "Auto Safety", "Door Open 15.9s", add 2-4 seconds. \                                              
+#define MOTOR_TIMEOUT_RECOVERY (19 * SECOND)  // Only triggered when a door obstruction is detected (chicken blocking the door way).Time difference between MOTOR_TIMEOUT and MOTOR_TIMEOUT_RECOVERY. eg additional 3 seconds.
+//                                               Allows for the "MOTOR_TIMEOUT" time to finish (full 15 seconds) plus a few seconds for the extra cord to unwind and rewind, eliminating a MOTOR_TIMEOUT fault.
+//                                               Once triggered, check Event page, find the sequence, eg "Close Obstruction", "Auto Safety", "Door Open 15.9s", add 2-4 seconds.
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -412,14 +276,17 @@ const int MAX_OBSTRUCTION_RETRIES = 3;  // Number of attemps to fully close the 
 //-------------------------------------
 
 // SHT31 Inside temperature/humidity Sensor
-#define MAX_CONSECUTIVE_SHT_FAILURES 10        // Log fault after 10 consecutive failures
-#define SHT_FIRST_READ_DELAY_MS (60 * SECOND)  // Delay before first reading ( __ seconds for sensor settling) Default 60 seconds
-#define SHT_READ_INTERVAL_MS (13 * MINUTE)     // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
+#define MAX_CONSECUTIVE_SHT_FAILURES 10               // Log fault after 10 consecutive failures
+#define SHT_FIRST_READ_DELAY_MS (60 * SECOND)         // Delay before first reading ( __ seconds for sensor settling) Default 60 seconds
+#define SHT_READ_INTERVAL_MS (13 * MINUTE)            // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
+const unsigned long INSIDE_TEMP_STALE_MS = 3 * HOUR;  // Inside reading older than this is treated as missing on the display and dashboard.
 
 // SHT30 Outside temp/humidity sensor. (Offset from the SHT31's schedule to help prevent I2C bus congestion)
 #define MAX_CONSECUTIVE_SHT_OUT_FAILURES 10            // Log fault after 10 consecutive failures
 #define OUTSIDE_SHT_FIRST_READ_DELAY_MS (75 * SECOND)  // Delay before first reading ( __ seconds for sensor settling) Default 75 seconds
 #define OUTSIDE_SHT_READ_INTERVAL_MS (9 * MINUTE)      // Subsequent reading interval every __ minutes. (reads in 24hrs: 9-minutes=160, 13-minutes=110, 17-minutes=85)
+const unsigned long OUTSIDE_TEMP_STALE_MS = 3 * HOUR;  // Outside reading older than this is ignored (dead/disconnected probe). Default 3 hours.
+
 
 // SHT3x temperature sensor addresses
 const uint8_t INSIDE_SHT_ADDRESS = 0x45;   // SHT31 (Link VIN to address pin for address 0x45)
@@ -466,7 +333,6 @@ enum DisplayPage {
 DisplayPage currentPage = PAGE_MAIN;
 
 // Event Scroll Sensitivity
-#define EVENT_SCROLL_TIMEOUT_MS (10 * SECOND)  // Exit event view after 10 sec inactivity
 
 // Watchdog
 #define WATCHDOG_TIMEOUT_MS (35 * SECOND)  // Watchdog timeout
@@ -489,7 +355,7 @@ DisplayPage currentPage = PAGE_MAIN;
 #define LIMIT_OPEN_PIN 15   // Door Limit Switch top, Reed switch, Normally open contacts. Connect to GND. (magnet to close circuit)
 #define LIMIT_CLOSE_PIN 16  // Door Limit Switch bottom, Reed switch, Normally open contacts. Connect to GND. (magnet to close circuit)
 
-#define LIGHT_PIN 17  // Auto Coop Light. To control a logic level relay board module. 3.3v or 5v coil
+#define LIGHT_PIN 17  // Auto Coop Light. To control a YX-mos mosfet trigger switch with PWM to dim the light
 
 #define BUZZER_PIN 3  // 3V Active Buzzer for alert fault. Connect to GND
 
@@ -529,15 +395,14 @@ SensirionI2cSht3x sht3xOutside;  // Outside SHT30 - 0x44
 // VIN/+ 3.3v
 // GND
 
-//INFO: Logic Level Relay Board. (Switch for coop light)
+//INFO: YX-mos Board. (PWM Switch for coop light)
 // pin 17 = data
-// DC+ 3.3v or 5v depending relay coil voltage
 // GND
+// VIN + 3.3V only used if using a relay board instead
 
 // INFO: ESP32 board RESET. Momentary push button. Recommeded in the final build.
 // Pin   RST
 // GND
-
 
 // ======================================================
 // ENUMS
@@ -650,7 +515,6 @@ int closeTime = 1220;
 
 int lastDay = -1;
 bool lastDST = false;
-bool currentDST = false;
 
 // ======================================================
 // ENVIRONMENT DATA
@@ -714,6 +578,11 @@ float todayMinHumOutside = 100;
 char todayMaxHumTimeOutside[16] = "";
 char todayMinHumTimeOutside[16] = "";
 
+// Wall-clock time of the most recent valid SHT3x sample, shared by the
+// temperature and humidity cards on each side of the dashboard.
+char lastInsideSampleTime[16] = "";
+char lastOutsideSampleTime[16] = "";
+
 // ======================================================
 // DISPLAY DATA
 // ======================================================
@@ -730,12 +599,9 @@ int newestEventIndex = -1;
 int viewedEventOffset = 0;
 int storedEventCount = 0;
 
-int displayedEventNumber = 1;
 
 char latestEvent[64] = "System Start";
 char latestEventTime[16] = "--:--";
-char displayedEvent[64] = "System Start";
-char displayedEventTime[16] = "--:--";
 
 char noticeText[32] = "";
 unsigned long noticeUntil = 0;
@@ -747,14 +613,11 @@ unsigned long lastOledActivity = 0;
 bool oledSleeping = false;
 bool displayDirty = true;
 
-bool viewingHistory = false;
 
-unsigned long historyViewStart = 0;
 
 int lastEncoderValue = 0;
 int manualEncoderAccum = 0;
 
-const unsigned long historyTimeout = EVENT_SCROLL_TIMEOUT_MS;
 
 // ======================================================
 // LIGHT
@@ -768,14 +631,12 @@ bool bedtimeWarning = false;
 bool nightMode = false;
 bool nightFlashAfterReboot = false;  // set at boot if door not closed at night; starts night flash on next close
 
-unsigned long nightLedTimer = 0;
 bool nightLedState = false;
 
 bool manualLightOverride = false;
 
 unsigned long manualLightOffTime = 0;
 
-bool lastLightButtonState = HIGH;
 bool manualBedtimeRequested = false;
 
 // When a manual bedtime close completes, hold the coop light on for this
@@ -816,15 +677,20 @@ bool outsideTempValid() {
   return !isnan(currentTempOutside) && (millis() - lastValidOutsideMillis) < OUTSIDE_TEMP_STALE_MS;
 }
 
+// Inside temp/humidity are only trusted if a valid reading arrived recently
+unsigned long lastValidInsideMillis = 0;
+
+bool insideTempValid() {
+  return !isnan(currentTemp) && (millis() - lastValidInsideMillis) < INSIDE_TEMP_STALE_MS;
+}
+
 float lastOpenTravelTime = 0;
 float lastCloseTravelTime = 0;
 
 unsigned long safetyStartTime = 0;
 unsigned long safetyOpenReachedTime = 0;
 
-unsigned long lastBuzzerAlert = 0;
 
-bool buzzerState = false;
 int buzzerStep = 0;
 unsigned long buzzerStepTime = 0;
 
@@ -846,9 +712,7 @@ bool closeStableState = HIGH;
 unsigned long openDebounceTime = 0;
 unsigned long closeDebounceTime = 0;
 
-bool lastScrollButtonState = HIGH;
 
-unsigned long lastScrollPress = 0;
 
 // ======================================================
 // STATES
@@ -881,9 +745,11 @@ const int MAX_LIMIT_RETRIES = 3;
 // CHICKEN / OBSTRUCTION RETRIES
 
 int openRetryCount = 0;
-int closeRetryCount = 0;
 
 int obstructionRetries = 0;
+
+// True while the last-resort forced close (after all obstruction retries) is running.
+bool finalCloseAttempt = false;
 
 bool systemLockout = false;
 
@@ -894,7 +760,6 @@ bool systemLockout = false;
 
 bool manualMoveActive = false;
 
-bool dailyResetDone = false;
 
 bool manualOpenedDoor = false;
 bool manualClosedDoor = false;
@@ -905,9 +770,7 @@ bool manualOpenBeforeClose = true;  // true if the manual open happened before t
 
 // Cold-delay helpers
 int delayedOpenTime = -1;
-int coldDelayDay = -1;
 int coldDelayCheckedDay = -1;
-bool coldDelayLogged = false;  // prevent repeated log messages
 
 AutoState computeAutoState(int nowMinutes) {
 
@@ -1078,8 +941,6 @@ void setEvent(const char* msg) {
   if (storedEventCount < MAX_EVENTS) {
     storedEventCount++;
   }
-
-  displayedEventNumber = storedEventCount;
 
   strncpy(
     eventHistory[newestEventIndex].msg,
@@ -1466,12 +1327,6 @@ void drawEventsPage() {
 
   u8g2.sendBuffer();
 }
-void drawTemperature(int x, int y, float temperature) {
-  char tempBuf[12];
-  snprintf(tempBuf, sizeof(tempBuf), "%.1f", temperature);
-  u8g2.drawStr(x, y, tempBuf);
-}
-
 void drawEnvironmentPage() {
 
   if (oledSleeping) return;
@@ -1512,7 +1367,7 @@ void drawEnvironmentPage() {
     // IN row
     const char* inLabel = " Temp INT";
     char inTempBuf[24];
-    if (!isnan(currentTemp)) {
+    if (insideTempValid()) {
       snprintf(inTempBuf, sizeof(inTempBuf), "%.1f C", currentTemp);
     } else {
       snprintf(inTempBuf, sizeof(inTempBuf), "  --.- C");
@@ -2106,12 +1961,8 @@ void refreshDisplayIfNeeded() {
     u8g2.drawStr((128 - w) / 2, 37, noticeText);
     u8g2.sendBuffer();
   }
-}
 
-void oledPrint(const char* text) {
-
-  // LOG EVENT + DISPLAY IT
-  setEvent(text);
+  displayDirty = false;
 }
 
 void oledNotice(const char* text) {
@@ -2141,6 +1992,16 @@ void updateEnvironment() {
   static unsigned long lastRead = 0;
   static int consecutiveShtFailures = 0;
   static bool firstReadDone = false;
+  static bool staleLogged = false;
+
+  // Flag a reading that has gone stale; the last good value stays in RAM but is no longer shown.
+  if (insideTempValid()) {
+    staleLogged = false;
+  } else if (!isnan(currentTemp) && !staleLogged) {
+    staleLogged = true;
+    Log.println("SHT31 reading stale");
+    setEvent("SHT31 Stale");
+  }
 
   // Read after settling delay on first call, then every SHT_READ_INTERVAL_MS
   if (!firstReadDone) {
@@ -2179,7 +2040,7 @@ void updateEnvironment() {
       break;
     }
 
-    delay(10);
+    delay(SHT_RETRY_DELAY_MS);
   }
 
   bool valid = true;
@@ -2192,7 +2053,10 @@ void updateEnvironment() {
     dashboardHumiditySample(false, NAN);
     dashboardTempSample(false, NAN);
     consecutiveShtFailures++;
-    Log.print("SHT3x Read Invalid (attempts=");
+    Log.printf("SHT3x Read Invalid (attempts=%d, failures=%d)\n", SHT_READ_RETRIES, consecutiveShtFailures);
+    if (consecutiveShtFailures == MAX_CONSECUTIVE_SHT_FAILURES) {
+      setEvent("SHT31 Fault");
+    }
     return;
   }
 
@@ -2201,6 +2065,7 @@ void updateEnvironment() {
 
   currentTemp = t;
   currentHumidity = h;
+  lastValidInsideMillis = millis();
   dashboardHumiditySample(false, h);
   dashboardTempSample(false, t);
   struct tm timeinfo;
@@ -2210,6 +2075,7 @@ void updateEnvironment() {
 
   char timeStamp[16];
   snprintf(timeStamp, sizeof(timeStamp), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
+  snprintf(lastInsideSampleTime, sizeof(lastInsideSampleTime), "%s", timeStamp);
 
   // Update daily max/min only when reading is valid
   // Process all four values first, then save to NVS once.
@@ -2260,7 +2126,6 @@ void updateOutsideColdLed() {
   }
 
   // If we have a valid outside temperature reading and it's below trigger -> ON
-  //if (!isnan(currentTempOutside) && currentTempOutside < outsideTempTriggerC) {
   if (outsideTempValid() && currentTempOutside < outsideTempTriggerC) {
     digitalWrite(COLD_LED_PIN, HIGH);
   } else {
@@ -2321,9 +2186,12 @@ void updateOutsideEnvironment() {
 
   if (!valid) {
     dashboardHumiditySample(true, NAN);
-    dashboardTempSample(false, NAN);
+    dashboardTempSample(true, NAN);
     consecutiveShtFailures++;
-    Log.print("SHT30 OUT Read Invalid temp=");
+    Log.printf("SHT30 OUT Read Invalid (attempts=%d, failures=%d)\n", SHT_READ_RETRIES, consecutiveShtFailures);
+    if (consecutiveShtFailures == MAX_CONSECUTIVE_SHT_OUT_FAILURES) {
+      setEvent("SHT30 OUT Fault");
+    }
 
     updateOutsideColdLed();
     return;
@@ -2338,13 +2206,6 @@ void updateOutsideEnvironment() {
   dashboardHumiditySample(true, h);
   dashboardTempSample(true, t);
 
-  // Valid reading — reset failure counter
-  consecutiveShtFailures = 0;
-
-  currentTempOutside = t;
-  lastValidOutsideMillis = millis();
-  currentHumidityOutside = h;
-
   struct tm timeinfo;
   if (!getTime(timeinfo)) {
     // still update cold LED state based on last known values
@@ -2355,6 +2216,7 @@ void updateOutsideEnvironment() {
 
   char timeStamp[16];
   snprintf(timeStamp, sizeof(timeStamp), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
+  snprintf(lastOutsideSampleTime, sizeof(lastOutsideSampleTime), "%s", timeStamp);
 
   // Update today's outside min/max values.
   // Process all four values first, then save to NVS once.
@@ -2862,7 +2724,6 @@ void updateBuzzerPattern() {
   if (faultState != FAULT_ACTIVE && !systemLockout && !timeAlarm) {
     digitalWrite(BUZZER_PIN, LOW);
     buzzerStep = 0;
-    buzzerState = false;
     return;
   }
 
@@ -2872,7 +2733,6 @@ void updateBuzzerPattern() {
 
     case 0:  // start beep cycle
       digitalWrite(BUZZER_PIN, HIGH);
-      buzzerState = true;
       buzzerStepTime = now;
       buzzerStep = 1;
       break;
@@ -2906,20 +2766,6 @@ void updateBuzzerPattern() {
         buzzerStep = 0;
       }
       break;
-  }
-}
-
-void updateFaultBuzzer() {
-
-  // ONLY ALERT DURING FAULTS
-  if (faultState != FAULT_ACTIVE && !systemLockout) {
-    return;
-  }
-
-  // WAIT FOR NEXT ALERT INTERVAL
-  if (millis() - lastBuzzerAlert >= buzzerRepeatInterval) {
-
-    lastBuzzerAlert = millis();
   }
 }
 
@@ -2988,6 +2834,7 @@ void clearFaultState() {
 
   safetyState = SAFETY_IDLE;
   obstructionRetries = 0;
+  finalCloseAttempt = false;
 
   motorStartTime = 0;
 
@@ -3010,9 +2857,9 @@ void triggerFault(const char* reason) {
 
   stopMotor();
 
-  faultState = FAULT_ACTIVE;
+  manualBedtimeRequested = false;
 
-  lastBuzzerAlert = millis();
+  faultState = FAULT_ACTIVE;
 
   manualMoveActive = false;
   manualEncoderAccum = 0;
@@ -3027,17 +2874,6 @@ void triggerFault(const char* reason) {
 
     if (openRetryCount >= MAX_LIMIT_RETRIES) {
       triggerLockout("OPEN LIMIT FAIL");
-      return;
-    }
-  }
-
-  // CLOSE failure tracking
-  if (strstr(reason, "CLOSE") != nullptr) {
-
-    closeRetryCount++;
-
-    if (closeRetryCount >= MAX_LIMIT_RETRIES) {
-      triggerLockout("CLOSE LIMIT FAIL");
       return;
     }
   }
@@ -3063,8 +2899,6 @@ void triggerLockout(const char* reason) {
   systemLockout = true;
   faultState = FAULT_ACTIVE;
 
-  lastBuzzerAlert = millis();
-
   strncpy(faultReason, reason, sizeof(faultReason) - 1);
   faultReason[sizeof(faultReason) - 1] = '\0';
 
@@ -3072,27 +2906,6 @@ void triggerLockout(const char* reason) {
   setEvent(reason);
 
   Log.println("!!! LOCKOUT TRIGGERED !!!");
-}
-
-// ======================================================
-// MANUAL OVERRIDE
-// ======================================================
-
-bool automationAllowed() {
-
-  return autoState == AUTO_ALLOWED;
-}
-
-// ======================================================
-// MOTOR PERMISSION GATE (HARD PRIORITY RULE)
-// ======================================================
-
-bool canAutoAct() {
-
-  if (systemLockout) return false;
-  if (faultState == FAULT_ACTIVE) return false;
-
-  return autoState == AUTO_ALLOWED;
 }
 
 void startOpening() {
@@ -3190,6 +3003,12 @@ void startClosing() {
 // ======================================================
 bool manualCloseRequested() {
 
+  // Do not change manual or lighting state if movement is blocked.
+  if (systemLockout || faultState == FAULT_ACTIVE) {
+    oledNotice(systemLockout ? "LOCKED OUT" : "FAULT ACTIVE");
+    return false;
+  }
+
   if (closeLimitHit()) {
     oledNotice("Already CLOSED");
     return false;
@@ -3202,15 +3021,28 @@ bool manualCloseRequested() {
   safetyStartTime = 0;
   safetyOpenReachedTime = 0;
   obstructionRetries = 0;
+  finalCloseAttempt = false;
+
+  // Remember bedtime intent, but don't activate it until closing starts.
+  const bool bedtimeClose = bedtimeWarning || lightOn;
+
+  // Start the move before asserting the manual lock, or the gate blocks it.
+  manualOpenedDoor = false;
+  manualClosedDoor = false;
+  startClosing();
+
+  // startClosing() may find the door already at its close limit.
+  if (doorState != DOOR_CLOSING) {
+    manualMoveActive = false;
+    return false;
+  }
 
   struct tm timeinfo;
   if (getTime(timeinfo)) {
     manualCloseDay = timeinfo.tm_yday;
   }
 
-  // Bedtime window: stop the countdown, hold both night LEDs solid,
-  // arm the alternating flash for when the bottom limit is reached.
-  if (bedtimeWarning || lightOn) {
+  if (bedtimeClose) {
     bedtimeWarning = false;
     manualBedtimeRequested = true;
     digitalWrite(NIGHT_LED1_PIN, HIGH);
@@ -3218,11 +3050,6 @@ bool manualCloseRequested() {
   }
 
   setEvent("Manual CLOSE");
-
-  // Start the move BEFORE asserting the lock, or the gate blocks it.
-  manualOpenedDoor = false;
-  manualClosedDoor = false;
-  startClosing();
   manualClosedDoor = true;
 
   return true;
@@ -3251,8 +3078,6 @@ void connectWiFi() {
 
     setEvent("WiFi Connected");
 
-    //Log.println("WiFi Connected");
-
     Log.println(WiFi.localIP());
 
     dashboardOnWifiConnected();
@@ -3271,8 +3096,6 @@ void connectWiFi() {
     wifiConnected = false;
 
     setEvent("WiFi Lost");
-
-    //Log.println("WiFi Lost");
 
     dashboardOnWifiLost();
 
@@ -3463,7 +3286,6 @@ void updateSunTimes(struct tm timeinfo) {
   bool nowDST = isInBST(timeinfo);
   if (timeinfo.tm_mday == lastDay && nowDST == lastDST) return;
   lastDST = nowDST;
-  currentDST = nowDST;
   lastDay = timeinfo.tm_mday;
 
   int year = timeinfo.tm_year + 1900;
@@ -3520,12 +3342,56 @@ void updateSunTimes(struct tm timeinfo) {
 // LIGHT PWM HELPERS (XY-MOS on LIGHT_PIN)
 // ======================================================
 
+static const unsigned long LIGHT_SOFT_START_MS = 3000UL;
+static int lightDutyNow = 0;
+static int lightSoftStartFrom = 0;
+static unsigned long lightSoftStartAt = 0;
+static bool lightSoftStartActive = false;
+
+void startLightSoftStart() {
+  if (!enableLightDimming) {
+    lightSoftStartActive = false;
+    setLightDuty(LIGHT_FULL_DUTY);
+    return;
+  }
+
+  lightSoftStartFrom = lightDutyNow;
+  lightSoftStartAt = millis();
+  lightSoftStartActive = (lightSoftStartFrom < LIGHT_FULL_DUTY);
+
+  if (!lightSoftStartActive) {
+    setLightDuty(LIGHT_FULL_DUTY);
+  }
+}
+
+void updateLightSoftStart() {
+  if (!lightOn) {
+    lightSoftStartActive = false;
+    return;
+  }
+
+  if (!lightSoftStartActive) return;
+
+  unsigned long elapsed = millis() - lightSoftStartAt;
+  if (elapsed >= LIGHT_SOFT_START_MS) {
+    lightSoftStartActive = false;
+    setLightDuty(LIGHT_FULL_DUTY);
+    return;
+  }
+
+  int rise = (int)(((long)(LIGHT_FULL_DUTY - lightSoftStartFrom) * elapsed)
+                   / LIGHT_SOFT_START_MS);
+  setLightDuty(lightSoftStartFrom + rise);
+}
+
 void setLightDuty(int duty) {
   if (duty < 0) duty = 0;
   if (duty > 255) duty = 255;
 
+  lightDutyNow = duty;
+
   if (enableLightDimming) {
-    ledcWrite(LIGHT_PIN, duty);  // core 3.x: write by pin
+    ledcWrite(LIGHT_PIN, duty);
   } else {
     digitalWrite(LIGHT_PIN, duty > 0 ? HIGH : LOW);
   }
@@ -3570,6 +3436,14 @@ int computeScheduledLightDuty() {
   return duty;
 }
 
+// Final off: drive the pin low, clear state and record the event once.
+void turnLightOff() {
+  setLightDuty(0);
+  lightOn = false;
+  lightCycleComplete = true;
+  setEvent("Light OFF");
+}
+
 // ======================================================
 // MANUAL LIGHT HOLD (post-manual-close)
 // ======================================================
@@ -3589,7 +3463,12 @@ void updateManualLightHold() {
     // Fade only during the last LIGHT_FADE_MINUTES of the hold.
     long fadeMs = (long)LIGHT_FADE_MINUTES * 60000L;
 
-    if (lightOn && remaining <= fadeMs) {
+    if (lightOn && remaining > fadeMs) {
+
+      // Still in the hold window before the fade starts: full brightness.
+      setLightDuty(LIGHT_FULL_DUTY);
+
+    } else if (lightOn) {
 
       // t goes 0.0 at fade start -> 1.0 at hold end
       float t = 1.0f - ((float)remaining / (float)fadeMs);
@@ -3608,19 +3487,12 @@ void updateManualLightHold() {
       setLightDuty(duty);
     }
 
-    return;   // hold still running (either full brightness or mid-fade)
+    return;  // hold still running (either full brightness or mid-fade)
   }
 
   // Hold expired — final off.
   if (lightOn) {
-
-    setLightDuty(0);
-
-    lightOn = false;
-
-    lightCycleComplete = true;
-
-    setEvent("Light OFF");
+    turnLightOff();
   }
 
   manualLightOffPendingAt = 0;
@@ -3674,33 +3546,21 @@ void updateLight(int nowMinutes) {
 
   // TURN ON
   if (!lightOn && !lightCycleComplete && nowMinutes >= onTime && nowMinutes < offTime) {
-    setLightDuty(LIGHT_FULL_DUTY);
-
     lightOn = true;
-
     bedtimeWarning = true;
     nightMode = false;
-
+    startLightSoftStart();
     setEvent("Light ON");
   }
 
   // TURN OFF
-  //if (lightOn && nowMinutes >= offTime) {
-  if (lightOn && nowMinutes >= offTime && manualLightOffPendingAt == 0) {
-
-    setLightDuty(0);
-
-    lightOn = false;
-
-    lightCycleComplete = true;
-
-    setEvent("Light OFF");
+  if (lightOn && nowMinutes >= offTime
+      && manualLightOffPendingAt == 0
+      && !manualBedtimeRequested) {
+    turnLightOff();
   }
 
-  // Continuous brightness update (smooth fade) — only while auto-controlled
-  if (lightOn) {
-    setLightDuty(computeScheduledLightDuty());
-  }
+  // The continuous scheduled fade runs every pass in loop().
 
   // RESET NEXT MORNING
   if (nowMinutes < actualSunrise) {
@@ -3751,6 +3611,7 @@ void handleSwitch() {
         safetyStartTime = 0;
         safetyOpenReachedTime = 0;
         obstructionRetries = 0;
+        finalCloseAttempt = false;
 
         // Cancel any manual override first, so the gate in startOpening() lets this through
         manualOpenedDoor = false;
@@ -3868,10 +3729,8 @@ void updateDoor() {
       // DOOR CLOSED SUCCESSFULLY
       // ==========================================
       if (closeHit) {
-
-        closeRetryCount = 0;
-
         obstructionRetries = 0;
+        finalCloseAttempt = false;
 
         lastCloseTravelTime =
           (millis() - motorStartTime) / 1000.0f;
@@ -3918,17 +3777,40 @@ void updateDoor() {
       // ==========================================
       else if (millis() - motorStartTime > MOTOR_TIMEOUT) {
         stopMotor();
-        obstructionRetries++;
-        setEvent("Close Obstruction");
 
-        if (obstructionRetries >= MAX_OBSTRUCTION_RETRIES) {
+        if (finalCloseAttempt) {
+          // The last-resort close has run its course. Leave the door as far
+          // closed as it will go and raise a fault so it is noticed.
+          finalCloseAttempt = false;
           safetyState = SAFETY_IDLE;
           triggerFault("Door blocked");
         } else {
+          obstructionRetries++;
+          setEvent("Close Obstruction");
 
-          safetyStartTime = millis();
-          safetyState = SAFETY_OBSTRUCTION;
-          startOpening();
+          if (obstructionRetries >= MAX_OBSTRUCTION_RETRIES) {
+            // Third obstruction: make one final forced close instead of
+            // leaving the coop open, then stop when the motor times out.
+            safetyState = SAFETY_IDLE;
+            setEvent("Final Close");
+            finalCloseAttempt = true;
+            startClosing();
+
+            // If the forced close could not start, do not keep looping the
+            // obstruction cycle. If the door is already at the bottom limit
+            // that is a success; otherwise raise the fault so it is seen.
+            if (doorState != DOOR_CLOSING) {
+              finalCloseAttempt = false;
+              obstructionRetries = 0;
+              if (!closeLimitHit()) {
+                triggerFault("Door blocked");
+              }
+            }
+          } else {
+            safetyStartTime = millis();
+            safetyState = SAFETY_OBSTRUCTION;
+            startOpening();
+          }
         }
       }
 
@@ -4035,7 +3917,7 @@ void performStartupRecovery() {
 
     doorState = DOOR_CLOSED;
 
-    //setEvent("Door CLOSED");
+    // Door CLOSED event intentionally not logged (reduces Event page noise).
   }
 }
 
@@ -4127,7 +4009,7 @@ void setup() {
   // Initialise inside SHT31 temperature sensor
   sht3xInside.begin(Wire, INSIDE_SHT_ADDRESS);
 
-  //setEvent("SHT31 Initialised"); // commented out to reduce Event logging
+  // SHT31 init event intentionally not logged (reduces Event page noise).
   Log.println("SHT31 initialised at address 0x45");
 
   // ======================================================
@@ -4219,7 +4101,7 @@ void setup() {
 
     sht3xOutside.begin(Wire, OUTSIDE_SHT_ADDRESS);
 
-    //setEvent("SHT30 Initialised"); // commented out to reduce event logging
+    // SHT30 init event intentionally not logged (reduces Event page noise).
     Log.println("SHT30 OUT initialised at address 0x44");
   }
 
@@ -4305,8 +4187,12 @@ void setup() {
   closeStableState = lastCloseReading;
 
   pinMode(LIGHT_PIN, OUTPUT);
-  ledcAttach(LIGHT_PIN, PWM_FREQ_HZ, PWM_RES_BITS);  // core 3.x PWM
-  ledcWrite(LIGHT_PIN, 0);                           // start off
+  if (enableLightDimming) {
+    ledcAttach(LIGHT_PIN, PWM_FREQ_HZ, PWM_RES_BITS);  // core 3.x PWM
+    ledcWrite(LIGHT_PIN, 0);                           // start off
+  } else {
+    digitalWrite(LIGHT_PIN, LOW);  // start off (no PWM)
+  }
 
   pinMode(BUZZER_PIN, OUTPUT);
 
@@ -4325,8 +4211,6 @@ void setup() {
 
   pinMode(COLD_LED_PIN, OUTPUT);
   digitalWrite(COLD_LED_PIN, LOW);  // initial off
-
-  lastBuzzerAlert = millis();
   // Rotary Encoder Setup
   rotaryEncoder.begin();
 
@@ -4424,10 +4308,6 @@ void handleEventScroll() {
           manualMoveActive = false;
         }
       }
-
-      displayedEventNumber = storedEventCount - viewedEventOffset;
-      viewingHistory = true;
-      historyViewStart = millis();
       lastOledActivity = millis();
       displayDirty = true;
       drawEventsPage();
@@ -4538,7 +4418,6 @@ void handleEventScroll() {
       resetDone = true;
       systemLockout = false;
       openRetryCount = 0;
-      closeRetryCount = 0;
       clearFaultState();
       timeAlarm = false;
       if (timeLostSince != 0) timeLostSince = millis();  // re-alarm after another TIME_LOST_ALARM_MS
@@ -4570,7 +4449,6 @@ void handleEventScroll() {
 
       systemLockout = false;
       openRetryCount = 0;
-      closeRetryCount = 0;
       clearFaultState();
       timeAlarm = false;
       if (timeLostSince != 0) timeLostSince = millis();  // re-alarm after another TIME_LOST_ALARM_MS
@@ -4616,8 +4494,6 @@ void handleEventScroll() {
       lastEncoderValue = 0;
       manualEncoderAccum = 0;
 
-      viewingHistory = false;
-
       lastOledActivity = millis();
       displayDirty = true;
       refreshDisplayIfNeeded();
@@ -4640,9 +4516,9 @@ void handleEventScroll() {
       } else {
         // Light is OFF, turn it ON (for 10 minutes)
         lightOn = true;
-        setLightDuty(LIGHT_FULL_DUTY);
         manualLightOverride = true;
-        manualLightOffTime = millis() + manualLightTimeout;  // Auto-off after 10 min
+        manualLightOffTime = millis() + manualLightTimeout;
+        startLightSoftStart();
         setEvent("Manual Light ON");
       }
 
@@ -4844,6 +4720,25 @@ void loop() {
 
   loopStage = 12;
   updateManualLightHold();
+  updateLightSoftStart();
+
+  // Smooth scheduled fade — runs every pass (throttled), not once a minute.
+  if (lightOn && !manualLightOverride
+      && manualLightOffPendingAt == 0
+      && !lightSoftStartActive
+      && !manualBedtimeRequested) {
+    static unsigned long lastLightFadeMs = 0;
+    unsigned long nowMs = millis();
+    if (nowMs - lastLightFadeMs >= 100) {
+      lastLightFadeMs = nowMs;
+      int duty = computeScheduledLightDuty();
+      if (duty <= 0) {
+        turnLightOff();
+      } else {
+        setLightDuty(duty);
+      }
+    }
+  }
 
   loopStage = 13;
   connectWiFi();
@@ -4918,6 +4813,16 @@ void loop() {
     snprintf(lastGoodTime, sizeof(lastGoodTime), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
 
     updateSunTimes(timeinfo);
+
+    // A cold delay is only valid for the day it was set and while the door is still closed.
+    static int lastColdDelayDay = -1;
+    if (timeinfo.tm_mday != lastColdDelayDay) {
+      lastColdDelayDay = timeinfo.tm_mday;
+      delayedOpenTime = -1;
+    }
+    if (delayedOpenTime >= 0 && doorState == DOOR_OPEN) {
+      delayedOpenTime = -1;
+    }
 
     // Save environment log to persistent storage daily (inside + outside + today's values)
     static int lastSavedDay = -1;
@@ -4995,6 +4900,9 @@ void loop() {
             // Mark we've performed the morning check so we won't do it again today
             coldDelayCheckedDay = today;
 
+            // Clear any decision left over from a previous day or earlier check.
+            delayedOpenTime = -1;
+
             // Decide whether to apply the cold delay (only now, once per day)
             // First: try to refresh the outside reading up to 3 attempts and reset its read timer
             if (enableOutsideSHT && !forceOpenDespiteCold) {
@@ -5011,11 +4919,9 @@ void loop() {
               // Set the delayed open minute and record the day
               delayedOpenTime = openTime + doorOpenDelayIfColdMinutes;
               if (delayedOpenTime >= 24 * 60) delayedOpenTime -= 24 * 60;
-              coldDelayDay = today;
 
               // Log a single "Cold Delay" event now that the morning opening was postponed
               setEvent("Cold Delay");
-              coldDelayLogged = true;
             } else {
               // Temperature is OK (or sensor missing) — open immediately
               setEvent("Auto Open");
@@ -5032,8 +4938,6 @@ void loop() {
             if (enableOutsideSHT && !forceOpenDespiteCold && outsideTempValid() && currentTempOutside >= outsideTempTriggerC) {
               // Cancel the delay silently (no event)
               delayedOpenTime = -1;
-              coldDelayDay = -1;
-              coldDelayLogged = false;
 
               // If we're within the operating window, open immediately
               if (nowMinutes >= openTime && nowMinutes < closeTime) {
@@ -5044,8 +4948,6 @@ void loop() {
             // If not cancelled, open when delayed time is reached
             else if (nowMinutes >= delayedOpenTime && nowMinutes < closeTime) {
               delayedOpenTime = -1;
-              coldDelayDay = -1;
-              coldDelayLogged = false;
               setEvent("Auto Open");
               startOpening();
             }

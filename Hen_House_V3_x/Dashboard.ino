@@ -7,9 +7,6 @@
 #include <WebServer.h>
 #include <esp_timer.h>
 #include <esp_random.h>
-#include <esp_system.h>
-#include "RemoteLog.h"
-#include "HumTrend.h"
 
 const bool DASH_SERVE_WHILE_MOVING = false;
 
@@ -34,7 +31,7 @@ main{max-width:400px;margin:0 auto}
 .card{position:relative;min-width:0;padding:12px;border-radius:18px;border:1.5px solid var(--c);overflow:hidden;
   background:
     linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,0) 45%,rgba(0,0,0,.22)),
-    linear-gradient(145deg,var(--t),#0d121a 80%);
+    linear-gradient(145deg,var(--t2,var(--t)),#0d121a 80%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.4),
     inset 0 -12px 20px rgba(0,0,0,.45),
@@ -50,12 +47,24 @@ main{max-width:400px;margin:0 auto}
 .tfill{fill:var(--c)}
 .row{display:grid;gap:10px;margin-top:12px}
 .r3{grid-template-columns:1fr .68fr 1fr}
-.temps .tile{min-height:178px}
-.temps .tile:not(.difference){padding:16px 6px}
+.temps .tile{min-height:165px;gap:4px}
+.temps .tile:not(.difference){padding:12px 6px}
 .temps .difference{justify-content:center;padding:9px 4px}
 .temps .difference .lb{font-size:clamp(10px,2.8vw,12px);min-height:auto}
 .temps .difference .vl{font-size:clamp(16px,4.5vw,20px)}
-.r4{grid-template-columns:repeat(4,1fr);gap:8px}
+/* The CoopCam page is slightly taller now that it carries the lens heater
+   tile. Give the Hen House bottom row a floor so both dashboards finish at the
+   same height, and let the four cards use the extra space. */
+.r4{grid-template-columns:repeat(4,1fr);gap:8px;min-height:90px}
+/* CoopCam's top row steps up at these widths; follow it so both pages still
+   finish at the same height. */
+@media (min-width:420px) and (max-width:429px){.r4{min-height:99px}}
+@media (min-width:430px){.r4{min-height:92px}}
+/* The humidity Min/Max rows use height taken from the temperature row. These
+   small steps keep both dashboards level at phone and desktop widths. */
+@media (max-width:389px){.temps .tile,.temps .midstack{min-height:168px}}
+@media (min-width:420px){.r2{min-height:200px}}
+@media (min-width:420px){.temps .tile,.temps .midstack{min-height:168px}}
 .r2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .r2>.card:nth-child(1){order:2}
 .r2>.card:nth-child(2){order:1}
@@ -64,12 +73,21 @@ main{max-width:400px;margin:0 auto}
 .r4>.card:nth-child(3){order:3}
 .r4>.card:nth-child(4){order:4}
 
+/* Small cycle tiles carry their tint over the whole card height, so they get
+   the same vertical ramp as CoopCam's tiles. Only the 24-hour cards are
+   switched, so the sensor tiles keep their own body. */
+.r4 .card.punch,.r3 .card.punch{
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,.03) 38%,rgba(0,0,0,.26)),
+    linear-gradient(180deg,var(--t2s,var(--t2,var(--t))),#070a10 100%)}
+.r4 .card.punch::after,.r3 .card.punch::after{display:none}
+
 /* Middle column of the temperature row: stacked Timezone (short) + Difference (taller) */
 .temps .midstack{
   display:flex;
   flex-direction:column;
   gap:10px;
-  min-height:178px;
+  min-height:165px;
 }
 .temps .midstack>.card{
   flex:0 0 auto;
@@ -107,21 +125,31 @@ main{max-width:400px;margin:0 auto}
   -webkit-text-fill-color:transparent;color:transparent;
   filter:drop-shadow(0 1px 0 rgba(255,247,200,.65)) drop-shadow(0 0 8px rgba(245,197,24,.45))}
 .title #ver{
+  font-size:.52em;
   background:linear-gradient(180deg,#f7ecc8,#fff 65%);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent}
 .tag{margin-top:6px;font-style:italic;font-size:clamp(9px,2.6vw,11.5px);color:#d3d9e6;line-height:1.25}
 
 .tile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 6px}
-.r3 .ic{width:clamp(32px,10.5vw,42px)}
+.r3 .ic{width:clamp(28px,9vw,36px)}
 .r2 .ic{width:clamp(34px,9vw,42px)}
 .r4 .ic{width:clamp(24px,7.4vw,30px)}
-.r4 .tile{padding:10px 4px}
+.r4 .ic{display:none}
+.r4 .tile{padding:10px 4px;justify-content:space-between}
 .r2 .tile{padding:13px 8px;gap:7px}
 
 .lb{font-style:italic;color:#e6ebf5;line-height:1.15;display:flex;align-items:center;justify-content:center;min-height:2.3em;
   font-size:clamp(11px,3.3vw,13px)}
-.r4 .lb{font-size:clamp(9px,2.7vw,11px)}
+/* The strike lives inside a full-width label box, matching CoopCam's bottom
+   row. It is absolutely positioned, so it adds no height of its own. */
+.r4 .lb{position:relative;width:100%;padding-bottom:5px;
+  font-size:clamp(9px,2.7vw,11px);line-height:1.08;
+  min-height:calc(2.2em + 8px)}
+.r4 .lb::after{content:"";position:absolute;left:0;right:0;bottom:0;
+  height:1px;background:rgba(255,255,255,.16)}
+.r4 .lb2{display:block;text-align:center}
+.r4 .lb2>span{display:block}
 .r2 .lb{font-size:clamp(12px,3.2vw,14px)}
 .vl{font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;text-shadow:0 2px 3px rgba(0,0,0,.5)}
 .r3 .vl{font-size:clamp(22px,6.8vw,28px)}
@@ -134,10 +162,27 @@ main{max-width:400px;margin:0 auto}
 .tr.down{color:#8fd0ff}
 .tr.flat{color:#cfd8e8}
 
-.mm{display:flex;flex-direction:column;gap:2px;font-size:clamp(10px,3vw,12px);font-style:italic;color:#cfd8e8;line-height:1.2}
+.mm{display:grid;grid-template-columns:auto auto auto auto;justify-content:center;column-gap:4px;row-gap:2px;
+  font-size:clamp(10px,3vw,12px);font-style:italic;color:#cfd8e8;line-height:1.2;font-variant-numeric:tabular-nums}
+.mm .lo,.mm .hi{display:contents}
+.mm .t{min-width:5ch;text-align:right;font-style:normal;font-size:.9em;color:#9aa6b8}
+.mm .v{min-width:5ch;text-align:right}
 .mm b{font-style:normal;font-weight:700}
 .mm .lo b{color:#8fd0ff}
 .mm .hi b{color:#ffb86b}
+
+/* Humidity cards are too narrow for side-by-side Min/Max columns, so the two
+   readings stack under the live value. The colours match the temperature
+   Min/Max rows. No timestamps are shown. */
+.hgroup{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.hmm{display:grid;gap:2px;width:100%;
+  font-size:clamp(9px,2.7vw,11px);font-style:italic;color:#cfd8e8;
+  line-height:1.15;font-variant-numeric:tabular-nums}
+.hmm>div{display:flex;justify-content:center;gap:5px}
+.hmm .k{min-width:3.2ch;text-align:left}
+.hmm b{min-width:4ch;text-align:right;font-style:normal;font-weight:700}
+.hmm .lo b{color:#8fd0ff}
+.hmm .hi b{color:#ffb86b}
 
 .schedule{display:flex;justify-content:space-around;gap:8px;width:100%;margin-top:3px;padding-top:7px;border-top:1px solid rgba(255,255,255,.16);font-size:clamp(11px,3vw,13px);font-variant-numeric:tabular-nums}
 .schedule div{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -148,6 +193,7 @@ main{max-width:400px;margin:0 auto}
   background:linear-gradient(#3a4352,#1b212b);
   box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -3px 5px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.5)}
 .r4 .pill{font-size:clamp(9.5px,2.9vw,12px);padding:2px 7px}
+.pill.lgreen{background:linear-gradient(#c6ffb5,#6fd95f);border-color:#dcffd2;color:#0b2a08}
 .pill.green{background:linear-gradient(#5cf055,#1c9a1b);border-color:#6bf063}
 .pill.blue{background:linear-gradient(#63b8ff,#1d62c4);border-color:#8cc9ff}
 .pill.amber{background:linear-gradient(#ffcd4a,#ee8400);border-color:#ffd978;color:#2a1a00}
@@ -163,7 +209,6 @@ main{max-width:400px;margin:0 auto}
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   user-select:none;
-  padding:6px 16px;
   background:linear-gradient(#ffe45c,#eea000);
   border-color:#ffe98f;
   color:#2a1a00;
@@ -182,7 +227,7 @@ main{max-width:400px;margin:0 auto}
 .logttl{flex:1;min-width:0;font-style:italic;font-weight:800;font-size:clamp(13px,3.6vw,15px)}
 .logst{font-style:italic;font-size:clamp(10px,2.8vw,12px);color:#bfeee8}
 .logtile .pill.teal,.logcard .pill.teal{background:linear-gradient(rgba(255,255,255,.28),rgba(0,0,0,.22)),var(--oc,#1fb5a6);border-color:var(--oc,#1fb5a6);color:var(--oct,#04201d)}
-.logtile .ic rect,.logtile .ic path{stroke:var(--oc,#2fd6c4)}
+.logtile .ic rect,.logtile .ic path{stroke:var(--c,#2fd6c4)}
 button.pill{font-family:inherit;font-size:12px;line-height:1.2;padding:3px 10px;cursor:pointer}
 .logout{margin:10px 0 0;height:270px;max-height:50vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#05090d;color:#cfeee9;
@@ -306,7 +351,7 @@ button.pill{font-family:inherit;font-size:12px;line-height:1.2;padding:3px 10px;
 <!-- LINE 3: temps -->
 <div class="row r3 temps">
 
-  <div class="card tile" id="cardOut" style="--c:#5a6578;--t:#222a38">
+  <div class="card tile" id="cardOut" style="--c:#5a6578;--t:#222a38" title="Outside air temperature">
     <div class="ic"><svg viewBox="0 0 64 64">
       <rect x="24" y="4" width="16" height="42" rx="8" fill="#1b2230" stroke="url(#gMetal)" stroke-width="3"/>
       <circle cx="32" cy="46" r="13" fill="#1b2230" stroke="url(#gMetal)" stroke-width="3"/>
@@ -320,26 +365,26 @@ button.pill{font-family:inherit;font-size:12px;line-height:1.2;padding:3px 10px;
     <div class="lb">Outside Temperature</div>
     <div class="vl"><span class="v" id="tout">--</span><span class="unit">&deg;C</span><span class="tr" id="toutTr"></span></div>
     <div class="mm">
-      <span class="lo">Min <b class="v" id="omin">--</b>&deg;</span>
-      <span class="hi">Max <b class="v" id="omax">--</b>&deg;</span>
+      <span class="lo"><span class="t" id="ominT">--:--</span><span class="k">Min</span><b class="v" id="omin">--</b><span class="u">&deg;</span></span>
+      <span class="hi"><span class="t" id="omaxT">--:--</span><span class="k">Max</span><b class="v" id="omax">--</b><span class="u">&deg;</span></span>
     </div>
   </div>
 
   <div class="midstack">
 
-        <div class="card tile tz" style="--c:#2f7de0;--t:#17305a">
+        <div class="card tile tz" style="--c:#2f7de0;--t:#17305a" title="Cold-delay status and blue LED trigger temperature">
       <div class="lb">Cold Delay</div>
       <span class="pill v" id="coldPill">--</span>
     </div>
 
-    <div class="card tile difference" style="--c:#2f7de0;--t:#232a66">
+    <div class="card tile difference" id="diffCard" style="--c:#55558F;--t:#292A50" title="Inside minus outside temperature">
       <div class="lb">Difference</div>
       <div class="vl"><span class="v" id="diff">--</span><span class="unit">&deg;C</span></div>
     </div>
 
   </div>
 
-  <div class="card tile" id="cardIn" style="--c:#5a6578;--t:#222a38">
+  <div class="card tile" id="cardIn" style="--c:#5a6578;--t:#222a38" title="Air temperature at roosting height">
     <div class="ic"><svg viewBox="0 0 64 64">
       <rect x="24" y="4" width="16" height="42" rx="8" fill="#1b2230" stroke="url(#gMetal)" stroke-width="3"/>
       <circle cx="32" cy="46" r="13" fill="#1b2230" stroke="url(#gMetal)" stroke-width="3"/>
@@ -353,37 +398,17 @@ button.pill{font-family:inherit;font-size:12px;line-height:1.2;padding:3px 10px;
     <div class="lb">Inside Temperature</div>
         <div class="vl"><span class="v" id="tin">--</span><span class="unit">&deg;C</span><span class="tr" id="tinTr"></span></div>
     <div class="mm">
-      <span class="lo">Min <b class="v" id="imin">--</b>&deg;</span>
-      <span class="hi">Max <b class="v" id="imax">--</b>&deg;</span>
+      <span class="lo"><span class="t" id="iminT">--:--</span><span class="k">Min</span><b class="v" id="imin">--</b><span class="u">&deg;</span></span>
+      <span class="hi"><span class="t" id="imaxT">--:--</span><span class="k">Max</span><b class="v" id="imax">--</b><span class="u">&deg;</span></span>
     </div>
   </div>
 
 </div>
 
-<!-- LINE 4: outside humidity | log | wifi | inside humidity -->
+<!-- LINE 4: wifi | outside humidity | inside humidity | coop log -->
 <div class="row r4">
 
-  <div class="card tile" id="cardOutHum" style="--c:#5a6578;--t:#12304d">  
-    <div class="ic"><svg viewBox="0 0 64 64">
-      <path d="M32 4C32 4 12 28 12 41a20 20 0 0 0 40 0C52 28 32 4 32 4z" fill="url(#gDrop)" stroke="#bfe9ff" stroke-opacity=".6" stroke-width="1.5"/>
-      <path d="M21 41a11 11 0 0 0 8 11" stroke="#fff" stroke-opacity=".75" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <ellipse cx="25" cy="30" rx="2.6" ry="6" fill="#fff" fill-opacity=".35" transform="rotate(25 25 30)"/>
-    </svg></div>
-    <div class="lb">Outside Humidity</div>
-    <div class="vl"><span class="v" id="ohum">--</span><span class="unit">%</span><span class="tr" id="ohumTr"></span></div>
-  </div>
-
-  <div class="card tile logtile" id="logTile" role="button" tabindex="0" aria-expanded="false" style="--c:#1fb5a6;--t:#10373a">
-    <div class="ic"><svg viewBox="0 0 64 64">
-      <rect x="5" y="9" width="54" height="46" rx="7" fill="#0b1618" stroke="#2fd6c4" stroke-width="3"/>
-      <path d="M15 24l8 7-8 7" fill="none" stroke="#5ff0df" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M29 40h18M29 31h12" stroke="#9fe9e0" stroke-width="3" stroke-linecap="round"/>
-    </svg></div>
-    <div class="lb">Coop Log</div>
-    <span class="pill teal" id="logPill">Show</span>
-  </div>
-
-  <div class="card tile wifi" id="wifiCard" style="--c:#1fb5a6;--t:#0c3542">
+  <div class="card tile wifi" id="wifiCard" style="--c:#1fb5a6;--t:#0c3542" title="Wi-Fi signal strength in dBm">
     <div class="ic"><svg viewBox="0 0 40 40">
       <rect class="b" id="b1" x="2" y="26" width="7" height="12" rx="1.5"/>
       <rect class="b" id="b2" x="12" y="18" width="7" height="20" rx="1.5"/>
@@ -394,25 +419,57 @@ button.pill{font-family:inherit;font-size:12px;line-height:1.2;padding:3px 10px;
     <div class="vl"><span class="v" id="rssi">--</span><span id="rssiU"> dBm</span></div>
   </div>
 
-  <div class="card tile" id="cardInHum" style="--c:#5a6578;--t:#12304d">
+  <div class="card tile" id="cardOutHum" style="--c:#5a6578;--t:#222a38" title="Outside relative humidity">
     <div class="ic"><svg viewBox="0 0 64 64">
       <path d="M32 4C32 4 12 28 12 41a20 20 0 0 0 40 0C52 28 32 4 32 4z" fill="url(#gDrop)" stroke="#bfe9ff" stroke-opacity=".6" stroke-width="1.5"/>
       <path d="M21 41a11 11 0 0 0 8 11" stroke="#fff" stroke-opacity=".75" stroke-width="3" fill="none" stroke-linecap="round"/>
       <ellipse cx="25" cy="30" rx="2.6" ry="6" fill="#fff" fill-opacity=".35" transform="rotate(25 25 30)"/>
     </svg></div>
-    <div class="lb">Inside Humidity</div>
-    <div class="vl"><span class="v" id="hum">--</span><span class="unit">%</span><span class="tr" id="humTr"></span></div>
+    <div class="lb lb2"><span>Outside</span><span>Humidity</span></div>
+    <div class="hgroup">
+      <div class="vl"><span class="v" id="ohum">--</span><span class="unit">%</span><span class="tr" id="ohumTr"></span></div>
+      <div class="hmm">
+        <div class="lo"><span class="k">Min</span><b class="v" id="ohumMin">--</b></div>
+        <div class="hi"><span class="k">Max</span><b class="v" id="ohumMax">--</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tile" id="cardInHum" style="--c:#5a6578;--t:#222a38" title="Relative humidity at roosting height">
+    <div class="ic"><svg viewBox="0 0 64 64">
+      <path d="M32 4C32 4 12 28 12 41a20 20 0 0 0 40 0C52 28 32 4 32 4z" fill="url(#gDrop)" stroke="#bfe9ff" stroke-opacity=".6" stroke-width="1.5"/>
+      <path d="M21 41a11 11 0 0 0 8 11" stroke="#fff" stroke-opacity=".75" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="25" cy="30" rx="2.6" ry="6" fill="#fff" fill-opacity=".35" transform="rotate(25 25 30)"/>
+    </svg></div>
+    <div class="lb lb2"><span>Inside</span><span>Humidity</span></div>
+    <div class="hgroup">
+      <div class="vl"><span class="v" id="hum">--</span><span class="unit">%</span><span class="tr" id="humTr"></span></div>
+      <div class="hmm">
+        <div class="lo"><span class="k">Min</span><b class="v" id="humMin">--</b></div>
+        <div class="hi"><span class="k">Max</span><b class="v" id="humMax">--</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tile logtile" id="logTile" role="button" tabindex="0" aria-expanded="false" style="--c:#1fb5a6;--t:#10373a" title="Show or hide the serial log">
+    <div class="ic"><svg viewBox="0 0 64 64">
+      <rect x="5" y="9" width="54" height="46" rx="7" fill="#0b1618" stroke="#2fd6c4" stroke-width="3"/>
+      <path d="M15 24l8 7-8 7" fill="none" stroke="#5ff0df" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M29 40h18M29 31h12" stroke="#9fe9e0" stroke-width="3" stroke-linecap="round"/>
+    </svg></div>
+    <div class="lb">Coop Log</div>
+    <span class="pill" id="logPill">Show</span>
   </div>
 
 </div>
 
 <!-- LOG CARD (opened by the Coop Log tile) -->
-<div class="card logcard" id="logCard" style="--c:#1fb5a6;--t:#10373a">
+<div class="card logcard" id="logCard" style="--c:#1fb5a6;--t:#10373a" title="Live controller messages">
   <div class="logbar">
     <span class="logttl">Coop Log</span>
     <span class="logst" id="logSt">--</span>
-    <button class="pill teal" id="logPause" type="button">Pause</button>
-    <button class="pill teal" id="logClear" type="button">Clear</button>
+    <button class="pill" id="logPause" type="button">Pause</button>
+    <button class="pill" id="logClear" type="button">Clear</button>
   </div>
   <pre class="logout" id="logOut"></pre>
 </div>
@@ -432,6 +489,7 @@ button.pill{font-family:inherit;font-size:12px;line-height:1.2;padding:3px 10px;
 const $ = id => document.getElementById(id);
 const isNum = v => typeof v === 'number' && isFinite(v);
 const f = (v, d) => isNum(v) ? v.toFixed(d) : '--';
+const h = v => isNum(v) ? Math.round(v) + '%' : '--';
 const up = s => String(s || '--').toUpperCase();
 let doorCloseUiState = '';
 
@@ -444,7 +502,7 @@ function setPill(id, text, cls) {
 
 // Humidity trend arrow: server sends "up" / "down" / "steady", or null while it has no usable history
 function setTrend(id, t) {
-  const m = { up: ['\u2191', 'up', 'Rising'], down: ['\u2193', 'down', 'Falling'], steady: ['\u2192', 'flat', 'Steady'] }[t];
+  const m = { up: ['\u2191', 'up', 'Rising'], down: ['\u2193', 'down', 'Falling'], steady: ['\u2194', 'flat', 'Steady'] }[t];
   const el = $(id);
   el.textContent = m ? m[0] : '';
   el.className = 'tr' + (m ? ' ' + m[1] : '');
@@ -480,20 +538,54 @@ function tempBand(t, prev) {
 }
 
 const TITLE_PALETTE = {
-  night: ['#252344', '#11162d'],
-  preDawn: ['#514080', '#1c1635'],
+  night: ['#55558F', '#292A50'],
+  preDawn: ['#8068B8', '#382A5B'],
   sunrise: ['#E8AD3F', '#5B3310'],
-  morning: ['#82BCEB', '#173B60'],
-  midday: ['#35BDB5', '#0B3F45'],
-  afternoon: ['#E8C65A', '#4B3D16'],
-  sunset: ['#E98138', '#50250D']
+  morning: ['#FFE98A', '#4A3C10'],
+  midday: ['#FFD23F', '#4A3800'],
+  afternoon: ['#FF9F45', '#4A2A08'],
+  sunset: ['#F4A082', '#4E2430']
 };
+
+// Lift only the 24-hour palette cards toward their accent, then pull that
+// lift back toward grey, so the body reads as a quiet tint rather than a
+// colour. Everything else keeps its own flat tint; CSS falls back to --t.
+// The small tiles carry the tint over their whole height, so they take a
+// gentler, greyer lift and get the vertical ramp in CSS.
+const CARD_PUNCH = 0.14, CARD_GREY = 0.15;
+const CARD_PUNCH_SMALL = 0.10, CARD_GREY_SMALL = 0.40;
+function cardTint(c, t, a, grey) {
+  const px = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const C = px(c), T = px(t);
+  let o = T.map((v, i) => v + (C[i] - v) * a);
+  if (grey) {
+    const g = 0.299 * o[0] + 0.587 * o[1] + 0.114 * o[2];
+    o = o.map(v => v + (g - v) * grey);
+  }
+  return '#' + o.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+function paintCard(el, c, t, punch) {
+  el.style.setProperty('--c', c);
+  el.style.setProperty('--t', t);
+  el.classList.toggle('punch', !!punch);
+  if (punch) {
+    el.style.setProperty('--t2', cardTint(c, t, CARD_PUNCH, CARD_GREY));
+    el.style.setProperty('--t2s', cardTint(c, t, CARD_PUNCH_SMALL, CARD_GREY_SMALL));
+  } else {
+    el.style.removeProperty('--t2');
+    el.style.removeProperty('--t2s');
+  }
+}
 
 function setTitlePalette(phase) {
   const palette = TITLE_PALETTE[phase] || TITLE_PALETTE.night;
   const head = $('cardHead');
-  head.style.setProperty('--c', palette[0]);
-  head.style.setProperty('--t', palette[1]);
+
+  paintCard(head, palette[0], palette[1], true);
+
+  ['logTile', 'logCard', 'wifiCard', 'diffCard'].forEach(id => {
+    paintCard($(id), palette[0], palette[1], true);
+  });
 }
 
 // Coop Log icon and pills take the outside temperature colour; text goes dark on light colours
@@ -513,12 +605,59 @@ function setTempCard(id, t) {
     tempBandState[id] = undefined;
   }
   const el = $(id);
-  el.style.setProperty('--c', col[0]);
-  el.style.setProperty('--t', col[1]);
+  paintCard(el, col[0], col[1]);
 
-  if (id === 'cardIn') $('cardInHum').style.setProperty('--c', col[0]);    // inside humidity follows the inside temp
-  if (id === 'cardOut') $('cardOutHum').style.setProperty('--c', col[0]);  // outside humidity follows the outside temp
   if (id === 'cardOut') setLogAccent(col[0]);  // Coop Log icon and pills follow the outside temp
+}
+
+// Inside humidity retains its original palette and 3 %RH hysteresis.
+// Outside humidity uses the requested bands with exact cutoffs, so it has no
+// hysteresis. This allows the 98-100 %RH indigo band to appear as specified.
+const HUM_EDGES_IN  = [30, 40, 70, 80, 90];
+const HUM_EDGES_OUT = [40, 60, 80, 91, 98];
+const HUM_HYST = 3;
+const HUM_HYST_OUT = 0;
+const HUM_COLOURS = [
+  ['#b98a5a', '#3a2418'],  // below first edge  dry        tan
+  ['#7fd4e0', '#12333a'],  // fresh        light cyan
+  ['#35bdb5', '#0b3f45'],  // comfortable  teal
+  ['#2f7de0', '#17305a'],  // damp         blue
+  ['#5555c8', '#292a50'],  // wet          indigo
+  ['#8a4fd8', '#3a1f5c']   // above last   saturated    violet
+];
+const HUM_COLOURS_OUT = [
+  ['#F59E0B', '#222a38'],  // below 40 %RH  amber / orange
+  ['#84CC16', '#222a38'],  // 40 to below 60 %RH  lime
+  ['#10B981', '#222a38'],  // 60 to below 80 %RH  green
+  ['#06B6D4', '#222a38'],  // 80 to below 91 %RH  teal / cyan
+  ['#3B82F6', '#222a38'],  // 91 to below 98 %RH  blue
+  ['#6366F1', '#222a38']   // 98 to 100 %RH  indigo / violet
+];
+const HUM_NONE = ['#5a6578', '#222a38'];  // no reading: neutral grey
+const humBandState = {};
+
+function humBand(h, prev, edges, hyst = HUM_HYST) {
+  if (prev === undefined) {
+    let i = 0;
+    while (i < edges.length && h >= edges[i]) i++;
+    return i;
+  }
+  let i = prev;
+  while (i < edges.length && h >= edges[i] + hyst) i++;   // climb
+  while (i > 0 && h < edges[i - 1] - hyst) i--;           // fall
+  return i;
+}
+
+function setHumCard(id, h, edges, colours = HUM_COLOURS, hyst = HUM_HYST) {
+  let col = HUM_NONE;
+  if (isNum(h)) {
+    humBandState[id] = humBand(h, humBandState[id], edges, hyst);
+    col = colours[humBandState[id]];
+  } else {
+    humBandState[id] = undefined;
+  }
+  const el = $(id);
+  paintCard(el, col[0], col[1]);
 }
 
 // Door and Light card colours: [border, tint]
@@ -527,15 +666,7 @@ const CARD_SKY = ['#63b8ff', '#16385a'];
 const CARD_RED = ['#e0393e', '#4a1c24'];
 
 function setCardColour(id, col) {
-  const el = $(id);
-  el.style.setProperty('--c', col[0]);
-  el.style.setProperty('--t', col[1]);
-  if (id === 'cardDoor') {  // Coop Log tile, Coop Log panel and WiFi card follow the door card
-    ['logTile', 'logCard', 'wifiCard'].forEach(x => {
-      $(x).style.setProperty('--c', col[0]);
-      $(x).style.setProperty('--t', col[1]);
-    });
-  }
+  paintCard($(id), col[0], col[1]);
 }
 
 function blank() {
@@ -546,6 +677,8 @@ function blank() {
   setTitlePalette('night');
   setTempCard('cardIn', null);
   setTempCard('cardOut', null);
+  setHumCard('cardInHum', null, HUM_EDGES_IN);
+  setHumCard('cardOutHum', null, HUM_EDGES_OUT, HUM_COLOURS_OUT, HUM_HYST_OUT);
   setCardColour('cardDoor', TEMP_NONE);
   setCardColour('cardLight', TEMP_NONE);
   setTrend('ohumTr', null);
@@ -567,6 +700,14 @@ function render(d) {
 
   if (d.dayPhase) setTitlePalette(d.dayPhase);
 
+  // Sample times come from the same SHT3x read as each pair of cards.
+  const inSample = d.inSampleTime || '--:--';
+  const outSample = d.outSampleTime || '--:--';
+  $('cardIn').title = 'Air temperature at roosting height \u2014 last sample ' + inSample;
+  $('cardOut').title = 'Outside air temperature \u2014 last sample ' + outSample;
+  $('cardInHum').title = 'Relative humidity at roosting height \u2014 last sample ' + inSample;
+  $('cardOutHum').title = 'Outside relative humidity \u2014 last sample ' + outSample;
+
   $('tin').textContent = f(d.insideTemp, 1);
   $('tout').textContent = f(d.outsideTemp, 1);
   setTempCard('cardIn', d.insideTemp);
@@ -575,6 +716,10 @@ function render(d) {
   $('omax').textContent = f(d.outMax, 1);
   $('imin').textContent = f(d.inMin, 1);
   $('imax').textContent = f(d.inMax, 1);
+  $('ominT').textContent = d.outMinTime || '--:--';
+  $('omaxT').textContent = d.outMaxTime || '--:--';
+  $('iminT').textContent = d.inMinTime || '--:--';
+  $('imaxT').textContent = d.inMaxTime || '--:--';
 
   if (isNum(d.insideTemp) && isNum(d.outsideTemp)) {
     const x = d.insideTemp - d.outsideTemp;
@@ -586,6 +731,12 @@ function render(d) {
 
   $('ohum').textContent = f(d.outsideHumidity, 0);
   $('hum').textContent = f(d.humidity, 0);
+  $('ohumMin').textContent = h(d.outHumMin);
+  $('ohumMax').textContent = h(d.outHumMax);
+  $('humMin').textContent  = h(d.inHumMin);
+  $('humMax').textContent  = h(d.inHumMax);
+  setHumCard('cardInHum', d.humidity, HUM_EDGES_IN);
+  setHumCard('cardOutHum', d.outsideHumidity, HUM_EDGES_OUT, HUM_COLOURS_OUT, HUM_HYST_OUT);
   setTrend('ohumTr', d.outHumTrend);
   setTrend('humTr', d.humTrend);
   setTrend('toutTr', d.outTempTrend);
@@ -605,21 +756,34 @@ function render(d) {
 
   const door = up(d.door);
   const dp = $('doorPill');
-  const doorMoving = door === 'OPENING' || door === 'CLOSING';
-  if (doorCloseUiState === 'sending' || (doorCloseUiState === 'closing' && door === 'CLOSING')) {
-    setPill('doorPill', 'OPEN', 'blue');  // close in progress: plain blue OPEN pill, no gold, no extra text
+
+  if (doorCloseUiState === 'sending' ||
+      (doorCloseUiState === 'closing' && door === 'CLOSING')) {
+    setPill('doorPill', 'CLOSE', 'green');
     dp.classList.remove('armed');
   } else {
-    if (doorCloseUiState === 'closing' || doorCloseUiState === 'unknown') doorCloseUiState = '';
-    if (doorMoving) setPill('doorPill', 'OPEN', 'blue');
-    else setPill('doorPill', door, door === 'CLOSED' ? 'green' : door === 'OPEN' ? 'blue' : door === 'FAULT' ? 'red' : 'amber');
+    if (doorCloseUiState === 'closing' || doorCloseUiState === 'unknown') {
+      doorCloseUiState = '';
+    }
 
-    // Door card: amber when open, blue when closed, red on fault. Any other state keeps the current colour.
+    if (door === 'CLOSING') setPill('doorPill', 'CLOSE', 'green');
+    else if (door === 'OPENING') setPill('doorPill', 'OPEN', 'blue');
+    else setPill('doorPill', door,
+                 door === 'CLOSED' ? 'green' :
+                 door === 'OPEN' ? 'blue' :
+                 door === 'FAULT' ? 'red' : 'amber');
+
+    // Door card: amber when open, blue when closed, red on fault.
     if (door === 'OPEN') setCardColour('cardDoor', CARD_AMBER);
     else if (door === 'CLOSED') setCardColour('cardDoor', CARD_SKY);
     else if (door === 'FAULT') setCardColour('cardDoor', CARD_RED);
-    if (d.closeAllowed === true) dp.classList.add('armed');
-    else dp.classList.remove('armed');
+
+    if (d.closeAllowed === true) {
+      dp.textContent = 'CLOSE';
+      dp.classList.add('armed');
+    } else {
+      dp.classList.remove('armed');
+    }
   }
 
   const lamp = up(d.lighting) === 'ON';
@@ -691,7 +855,7 @@ async function logPoll() {
 function logToggle() {
   logOpen = !logOpen;
   logCard.style.display = logOpen ? 'block' : 'none';
-  $('logPill').textContent = logOpen ? 'Hide' : 'Show';
+  setPill('logPill', logOpen ? 'Hide' : 'Show', logOpen ? 'on' : '');
   logTile.setAttribute('aria-expanded', logOpen ? 'true' : 'false');
   if (logOpen) {
     logSt.textContent = logPaused ? 'Paused' : 'Loading';
@@ -717,7 +881,7 @@ $('doorPill').addEventListener('click', async () => {
   if (!dp.classList.contains('armed') || doorCloseUiState) return;
 
   doorCloseUiState = 'sending';
-  setPill('doorPill', 'OPEN', 'blue');
+  setPill('doorPill', 'CLOSE', 'green');
   dp.classList.remove('armed');
 
   try {
@@ -729,7 +893,7 @@ $('doorPill').addEventListener('click', async () => {
 
     if (res.ok) {
       doorCloseUiState = 'closing';
-      setPill('doorPill', 'OPEN', 'blue');
+  setPill('doorPill', 'CLOSE', 'lgreen');
     } else {
       // Board rejected: keep the gold glow only if still allowed
       doorCloseUiState = 'unknown';
@@ -808,7 +972,6 @@ static const char* dashboardDayPhase() {
   if (actualSunrise < 0 || actualSunset < 0) return "night";
 
   int preDawnStart = actualSunrise - 60;
-  int sunriseStart = actualSunrise - 30;
   int sunriseEnd = actualSunrise + 30;
   int midday = (actualSunrise + actualSunset) / 2;
   int sunsetStart = actualSunset - 30;
@@ -849,17 +1012,20 @@ static void dashHHMM(String& j, const char* key, int mins) {
 }
 
 // ======================================================
-// HUMIDITY TREND (read-only: copies the humidity values, never touches sensors)
-// One sample every 5 min, last 7 kept (30 min window). Arrow needs >= 15 min of history.
+// TEMPERATURE / HUMIDITY TREND (read-only: copies the values, never touches sensors)
+// One sample per sensor reading, last 7 kept. The arrow compares the newest
+// sample with the oldest of the last 3: about 26 min inside (13-min reads)
+// and 18 min outside (9-min reads). A failed reading clears the history.
 // ======================================================
 const uint32_t HUM_TREND_SAMPLE_MS = 300000UL;
-const uint32_t HUM_TREND_MIN_SPAN_MS = 900000UL;
-const float HUM_TREND_DEADBAND = 1.0f;  // %RH change across the window before it counts as up/down
+const uint32_t HUM_TREND_MIN_SPAN_MS = 900000UL;  // at least two samples this far apart
+const uint8_t TREND_WINDOW = 3;                   // newest vs oldest of the last 3 samples
+const float HUM_TREND_DEADBAND = 0.5f;  // %RH change across the window before it counts as up/down
 
 static HumTrend humTrendIn, humTrendOut;
 
-// Temperature trend: same sampling as humidity (one sample per sensor reading, last 7 kept)
-const float TEMP_TREND_DEADBAND = 0.5f;  // deg C change across the window before it counts as up/down
+// Temperature trend: same sampling and window as humidity
+const float TEMP_TREND_DEADBAND = 0.2f;  // deg C change across the window before it counts as up/down
 static HumTrend tempTrendIn, tempTrendOut;
 
 static void humTrendSample(HumTrend& h, float v) {
@@ -899,8 +1065,10 @@ void dashboardTempSample(bool outside, float tempC) {
 
 static const char* humTrendText(const HumTrend& h) {
   if (h.n < 2) return nullptr;
-  if ((uint32_t)(h.t[h.n - 1] - h.t[0]) < HUM_TREND_MIN_SPAN_MS) return nullptr;
-  float d = h.v[h.n - 1] - h.v[0];
+  uint8_t first = (h.n > TREND_WINDOW) ? (uint8_t)(h.n - TREND_WINDOW) : 0;
+  if (h.n - first < 2) return nullptr;
+  if ((uint32_t)(h.t[h.n - 1] - h.t[first]) < HUM_TREND_MIN_SPAN_MS) return nullptr;
+  float d = h.v[h.n - 1] - h.v[first];
   if (d >= HUM_TREND_DEADBAND) return "up";
   if (d <= -HUM_TREND_DEADBAND) return "down";
   return "steady";
@@ -908,8 +1076,10 @@ static const char* humTrendText(const HumTrend& h) {
 
 static const char* tempTrendText(const HumTrend& h) {
   if (h.n < 2) return nullptr;
-  if ((uint32_t)(h.t[h.n - 1] - h.t[0]) < HUM_TREND_MIN_SPAN_MS) return nullptr;
-  float d = h.v[h.n - 1] - h.v[0];
+  uint8_t first = (h.n > TREND_WINDOW) ? (uint8_t)(h.n - TREND_WINDOW) : 0;
+  if (h.n - first < 2) return nullptr;
+  if ((uint32_t)(h.t[h.n - 1] - h.t[first]) < HUM_TREND_MIN_SPAN_MS) return nullptr;
+  float d = h.v[h.n - 1] - h.v[first];
   if (d >= TEMP_TREND_DEADBAND) return "up";
   if (d <= -TEMP_TREND_DEADBAND) return "down";
   return "steady";
@@ -949,16 +1119,28 @@ static void dashHandleStatus() {
            upSec / 86400UL, (upSec % 86400UL) / 3600UL, (upSec % 3600UL) / 60UL, upSec % 60UL);
 
   String j;
-  j.reserve(620);
+  j.reserve(920);
   j += '{';
-  dashNum(j, "insideTemp", currentTemp, 1);
+  dashNum(j, "insideTemp", insideTempValid() ? currentTemp : NAN, 1);
   dashNum(j, "outsideTemp", outsideTempValid() ? currentTempOutside : NAN, 1);
   dashNum(j, "inMin", dashMin(todayMinTemp), 1);
+  dashStr(j, "inMinTime", todayMinTempTime);
   dashNum(j, "inMax", dashMax(todayMaxTemp), 1);
+  dashStr(j, "inMaxTime", todayMaxTempTime);
   dashNum(j, "outMin", dashMin(todayMinTempOutside), 1);
+  dashStr(j, "outMinTime", todayMinTempTimeOutside);
   dashNum(j, "outMax", dashMax(todayMaxTempOutside), 1);
-  dashNum(j, "humidity", currentHumidity, 1);
+  dashStr(j, "outMaxTime", todayMaxTempTimeOutside);
+  dashNum(j, "humidity", insideTempValid() ? currentHumidity : NAN, 1);
   dashNum(j, "outsideHumidity", dashOutHumidity(), 0);
+  // Humidity min/max are valid once their time string exists. Do not reuse
+  // dashMin(): it blanks 99-100 %, which is a real humidity reading here.
+  dashNum(j, "inHumMin",  todayMinHumTime[0]        ? todayMinHum        : NAN, 0);
+  dashNum(j, "inHumMax",  todayMaxHumTime[0]        ? todayMaxHum        : NAN, 0);
+  dashNum(j, "outHumMin", todayMinHumTimeOutside[0] ? todayMinHumOutside : NAN, 0);
+  dashNum(j, "outHumMax", todayMaxHumTimeOutside[0] ? todayMaxHumOutside : NAN, 0);
+  dashStr(j, "inSampleTime", lastInsideSampleTime);
+  dashStr(j, "outSampleTime", lastOutsideSampleTime);
   dashStr(j, "humTrend", humTrendText(humTrendIn));
   dashStr(j, "tempTrend", tempTrendText(tempTrendIn));
   dashStr(j, "outTempTrend", tempTrendText(tempTrendOut));

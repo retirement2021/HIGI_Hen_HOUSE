@@ -1,0 +1,30 @@
+CoopCam parts list
+
+ESP32 S3 with ipex socket (exernal antenna)
+DS3132 RTC
+1 x 3.3V relay module for camera ON/OFF
+1 x YX-MOS switch for IR lamp ON OFF pwm
+1 x YX-MOS switch for camema heater ON/OFF
+1 x LM2596 DC-DC step down buck
+12v power supply
+
+
+CAMERA HOUSING.   https://www.aliexpress.com/item/1005004341783295.html?spm=a2g0o.order_list.order_list_main.29.39531802EpPAic
+
+12V 7WATT HEATER  https://www.aliexpress.com/item/4001263528634.html?spm=a2g0o.order_list.order_list_main.35.39531802EpPAic
+
+M2 STAND OFF KIT https://www.aliexpress.com/item/1005010504343461.html?spm=a2g0o.order_list.order_list_main.11.39531802EpPAic
+
+CAMERA  https://www.aliexpress.com/item/1005009380711914.html?spm=a2g0o.order_list.order_list_main.136.39531802EpPAic
+
+IR ILLUMINATOR https://www.aliexpress.com/item/1005003786830758.html?spm=a2g0o.order_list.order_list_main.148.39531802EpPAic
+
+DC-DC BUCK https://www.aliexpress.com/item/1005007508685885.html?spm=a2g0o.order_list.order_list_main.106.39531802EpPAic
+
+YX-MOS PWM MOSFET SWITCH https://www.aliexpress.com/item/1005009007297262.html?spm=a2g0o.order_list.order_list_main.160.39531802EpPAic
+
+ESP32 S3 WITH EXTERNAL ANTENNA  https://www.aliexpress.com/item/1005008752956562.html?spm=a2g0o.order_list.order_list_main.184.39531802EpPAic
+
+3.3V RELAY MODULE  https://www.aliexpress.com/item/1005010694592313.html?spm=a2g0o.productlist.main.19.39c4aa36ZmmID4&algo_pvid=a3f951ad-0dcd-4915-8ace-26b4d2dedf76&algo_exp_id=a3f951ad-0dcd-4915-8ace-26b4d2dedf76-18&pdp_ext_f=%7B%22order%22%3A%22153%22%2C%22eval%22%3A%221%22%2C%22fromPage%22%3A%22search%22%7D&pdp_npi=6%40dis%21GBP%215.06%212.43%21%21%2142.74%2120.52%21%400b15831117955549778254295e108f%2112000053211539799%21sea%21UK%21705188716%21X%211%210%21n_tag%3A-29919%3Bd%3A1c4f7cd8%3Bm03_new_user%3A-29895&curPageLogUid=PYFA2yOJrK7L&utparam-url=scene%3Asearch%7Cquery_from%3A%7Cx_object_id%3A1005010694592313%7C_p_origin_prod%3A
+
+DS3132 RTC https://www.aliexpress.com/item/1005012091855933.html?spm=a2g0o.productlist.main.12.37be5aadfwObhX&algo_pvid=187baac1-15e3-430b-ad95-fd0f977a3b5a&algo_exp_id=187baac1-15e3-430b-ad95-fd0f977a3b5a-11&pdp_ext_f=%7B%22order%22%3A%2221%22%2C%22eval%22%3A%221%22%2C%22fromPage%22%3A%22search%22%7D&pdp_npi=6%40dis%21GBP%218.08%213.55%21%21%2168.17%2129.92%21%400b884b5817955550778874611e0ce3%2112000057491633663%21sea%21UK%21705188716%21X%211%210%21n_tag%3A-29919%3Bd%3A1c4f7cd8%3Bm03_new_user%3A-29895&curPageLogUid=JQIJFQErW3uR&utparam-url=scene%3Asearch%7Cquery_from%3A%7Cx_object_id%3A1005012091855933%7C_p_origin_prod%3A
